@@ -14,6 +14,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'; // For chat list icon
 
 function Sidebar({
   open,
@@ -55,12 +56,14 @@ function Sidebar({
       ModalProps={{ keepMounted: true }}
       sx={{
         "& .MuiDrawer-paper": {
-          width: { xs: "100vw", sm: 300 }, // full screen on mobile
-          maxWidth: "100vw",
-          padding: { xs: 1, sm: 2 },
-          bgcolor: "#0f172a",
-          color: "#fff",
+          width: { xs: "100vw", sm: 300 }, // Keeping your original width
+          maxWidth: "100vw", // Keeping your original max-width
+          padding: { xs: 1, sm: 2 }, // Keeping your original padding
+          // Pinterest-like light background for the sidebar
+          bgcolor: "#f8f8f8", // Very light grey, almost white
+          color: "#333333", // Dark text for light background
           boxSizing: "border-box",
+          boxShadow: '0 4px 12px rgba(0,0,0,0.08)', // Subtle shadow for depth
         },
       }}
     >
@@ -70,27 +73,37 @@ function Sidebar({
           display="flex"
           justifyContent="space-between"
           alignItems="center"
-          mb={2}
+          mb={2} // Keeping your original margin
         >
-          <Typography fontWeight="bold" fontSize={{ xs: "1rem", sm: "1.25rem" }}>
+          <Typography
+            fontWeight="bold"
+            fontSize={{ xs: "1rem", sm: "1.25rem" }} // Keeping your original font size
+            sx={{
+              color: "#e60023", // Pinterest red for the "Menu" title
+            }}
+          >
             Menu
           </Typography>
-          <IconButton onClick={onClose}>
-            <CloseIcon sx={{ color: "#fff" }} />
+          <IconButton onClick={onClose} sx={{ '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}>
+            <CloseIcon sx={{ color: "#767676" }} /> {/* Darker icon color for light background */}
           </IconButton>
         </Box>
 
-        {/* New Chat */}
+        {/* New Chat Button - Pinterest Style */}
         <Button
           fullWidth
           variant="contained"
           sx={{
-            mb: 2,
-            bgcolor: "#1e293b",
+            mb: 2, // Keeping your original margin
+            bgcolor: "#e60023", // Pinterest red for the new chat button
             color: "#fff",
-            fontSize: { xs: "0.75rem", sm: "0.9rem" },
-            "&:hover": {
-              bgcolor: "#334155",
+            fontSize: { xs: "0.75rem", sm: "0.9rem" }, // Keeping your original font size
+            borderRadius: 8, // More rounded for Pinterest feel (like a pill)
+            py: 1.2, // Slightly more vertical padding for button, for a clickier feel
+            boxShadow: '0 2px 5px rgba(230,0,35,0.3)', // Subtle red shadow
+            '&:hover': {
+              bgcolor: "#b3001a", // Darker red on hover
+              boxShadow: '0 4px 10px rgba(230,0,35,0.4)', // Slightly more pronounced shadow on hover
             },
           }}
           onClick={onNewChat}
@@ -98,7 +111,12 @@ function Sidebar({
           + New Chat
         </Button>
 
-        <Divider sx={{ borderColor: "#e0e0e0", bgcolor: "#334155", mb: 2 }} />
+        {/* Divider - Pinterest Style */}
+        <Divider sx={{
+          borderColor: "rgba(0,0,0,0.1)", // Very subtle dark border for light background
+          bgcolor: "transparent",
+          mb: 2 // Keeping your original margin
+        }} />
 
         {/* Chat List */}
         <List disablePadding>
@@ -106,16 +124,19 @@ function Sidebar({
             <ListItem
               key={chat.id}
               sx={{
-                backgroundColor: chat.id === activeChat ? "#1a1a2e" : "#1e293b",
-                color: "#fff",
-                mb: 1,
-                p: 1.5,
-                borderRadius: 2,
+                // Active chat background: slightly darker light grey for contrast
+                backgroundColor: chat.id === activeChat ? "#ededed" : "transparent", // Very light grey for active, transparent for inactive
+                color: chat.id === activeChat ? "#333333" : "#767676", // Dark text for active, muted grey for inactive
+                mb: 1, // Keeping your original margin
+                p: 1.5, // Keeping your original padding
+                borderRadius: 4, // More rounded corners for list items
                 justifyContent: "space-between",
                 alignItems: "center",
                 cursor: "pointer",
-                "&:hover": {
-                  backgroundColor: "#334155",
+                transition: "background-color 0.2s, color 0.2s",
+                '&:hover': {
+                  backgroundColor: "#f0f0f0", // Slightly darker light grey on hover
+                  color: "#333333", // Ensure text is dark on hover
                 },
               }}
               onClick={() => onChatSelect(chat.id)}
@@ -126,7 +147,8 @@ function Sidebar({
                 <Box
                   sx={{
                     flexGrow: 1,
-                    backgroundColor: "#1f2937",
+                    // White background for the edit field
+                    backgroundColor: "#ffffff",
                     borderRadius: 2,
                     px: 1,
                     py: 0.5,
@@ -145,15 +167,23 @@ function Sidebar({
                     InputProps={{
                       disableUnderline: true,
                       sx: {
-                        color: "#fff",
-                        fontSize: "0.9rem",
+                        color: "#333333", // Dark text for edit field
+                        fontSize: "0.9rem", // Retaining original font size
                         px: 1,
                       },
                     }}
+                    autoFocus
                   />
                 </Box>
               ) : (
                 <>
+                  <ChatBubbleOutlineIcon
+                    sx={{
+                      mr: 1.5, // Space between icon and text
+                      color: chat.id === activeChat ? "#e60023" : "#a0a0a0", // Pinterest red for active, softer grey for inactive
+                      fontSize: "small", // Keeping small size
+                    }}
+                  />
                   <ListItemText
                     primary={chat.title}
                     primaryTypographyProps={{
@@ -161,38 +191,55 @@ function Sidebar({
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
-                        fontSize: { xs: "0.75rem", sm: "1rem" },
-                        color: activeChat === chat.id ? "white" : "gray",
+                        fontSize: { xs: "0.75rem", sm: "1rem" }, // Keeping original font size
+                        fontWeight: chat.id === activeChat ? 600 : 400, // Bolder for active chat
+                        // Color inherited from ListItem
                       },
                     }}
                   />
-                  <Box
-                    sx={{
-                      display: "flex",
-                      gap: 0.5,
-                      opacity: hoveredChatId === chat.id ? 1 : 0,
-                      transition: "opacity 0.2s",
-                    }}
-                  >
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditClick(chat);
+                  {(hoveredChatId === chat.id || editingChatId === chat.id) && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        gap: 0.5, // Retaining original gap
+                        opacity: 1,
+                        transition: "opacity 0.2s",
                       }}
                     >
-                      <EditIcon sx={{ color: "#fff" }} fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(chat.id);
-                      }}
-                    >
-                      <DeleteIcon sx={{ color: "#fff" }} fontSize="small" />
-                    </IconButton>
-                  </Box>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditClick(chat);
+                        }}
+                        sx={{
+                            color: "#767676", // Muted grey icons for light background
+                            '&:hover': {
+                                bgcolor: 'rgba(0,0,0,0.05)', // Subtle hover background
+                                color: "#333333", // Darker on hover
+                            }
+                        }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(chat.id);
+                        }}
+                        sx={{
+                            color: "#767676", // Muted grey icons
+                            '&:hover': {
+                                bgcolor: 'rgba(0,0,0,0.05)', // Subtle hover background
+                                color: "#333333", // Darker on hover
+                            }
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  )}
                 </>
               )}
             </ListItem>

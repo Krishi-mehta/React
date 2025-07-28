@@ -1,5 +1,13 @@
-import React, { useRef } from "react";
-import { Box, IconButton, TextField } from "@mui/material";
+import React, { useRef, useEffect } from "react";
+import {
+  Box,
+  IconButton,
+  TextField,
+  Tooltip,
+  useTheme,
+  useMediaQuery,
+  Paper,
+} from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import SendIcon from "@mui/icons-material/Send";
 import SmartSuggestions from "./SmartSuggestions";
@@ -14,40 +22,88 @@ function InputArea({
 }) {
   const fileInputRef = useRef(null);
   const textFieldRef = useRef(null);
+  const inputElementRef = useRef(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  // console.log("InputArea - userInput:", userInput, "fullText:", fullText); // Debug props
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (inputElementRef.current && inputElementRef.current.contains(document.activeElement)) {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          if (userInput.trim() && !loading) {
+            onSend();
+          }
+        }
+      }
+    };
+
+    const inputDomElement = inputElementRef.current;
+    if (inputDomElement) {
+      inputDomElement.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      if (inputDomElement) {
+        inputDomElement.removeEventListener("keydown", handleKeyDown);
+      }
+    };
+  }, [userInput, onSend, loading]);
 
   return (
     <Box
       sx={{
-        p: 2,
-        bgcolor: "white",
-        borderTop: "1px solid #e0e0e0",
+        p: { xs: 0.8, sm: 1.2 },
+        bgcolor: "#ffffff",
+        borderTop: "1px solid #efefef",
+        boxShadow: "0 -2px 8px rgba(0,0,0,0.03)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        position: "sticky",
+        bottom: 0,
+        zIndex: 999,
       }}
     >
       <Box
         display="flex"
-        gap={2}
-        alignItems="center"
+        gap={1}
+        alignItems="flex-end"
         sx={{
-          width: "70%",
+          width: { xs: "95%", sm: "85%", md: "70%", lg: "90%" },
+          maxWidth: "800px",
           position: "relative",
         }}
       >
-        <IconButton
-          onClick={() => fileInputRef.current.click()}
-          sx={{
-            border: "1px dashed #e0e0e0",
-            borderRadius: "50%",
-            width: 40,
-            height: 40,
-          }}
-        >
-          <UploadFileIcon />
-        </IconButton>
+        {/* Upload Button */}
+        <Tooltip title="Upload PDF" enterDelay={500}>
+          <IconButton
+            onClick={() => fileInputRef.current.click()}
+            sx={{
+              flexShrink: 0,
+              color: "#767676",
+              backgroundColor: "transparent",
+              border: "1px solid #e0e0e0",
+              "&:hover": {
+                backgroundColor: "#e60023",
+                borderColor: "#e60023",
+                color: "#ffffff",
+                transform: "scale(1.05)",
+              },
+              borderRadius: "50%",
+              width: { xs: 36, sm: 40 },
+              height: { xs: 36, sm: 40 },
+              transition: "all 0.2s ease-in-out",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {/* Ensure the icon size is appropriate for the button size */}
+            <UploadFileIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
+          </IconButton>
+        </Tooltip>
 
         <input
           type="file"
@@ -55,56 +111,107 @@ function InputArea({
           accept=".pdf"
           ref={fileInputRef}
           onChange={onFileUpload}
-          sx={{
-            padding: "20px",
-          }}
         />
 
-        <Box sx={{ width: "100%", position: "relative" }}>
+        {/* Input + Send Button Container (Pill Shape) */}
+        <Paper
+          elevation={0}
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            alignItems: "center",
+            borderRadius: "24px",
+            backgroundColor: "#efefef",
+            border: "1px solid #e0e0e0",
+            transition: "all 0.2s ease-in-out",
+            "&:hover": {
+              borderColor: "#bdbdbd",
+              backgroundColor: "#e0e0e0",
+            },
+            "&:focus-within": {
+              backgroundColor: "#ffffff",
+              borderColor: "#e60023",
+              boxShadow: "0 0 0 2px rgba(230, 0, 35, 0.25)",
+            },
+            minHeight: { xs: "38px", sm: "40px" },
+            padding: { xs: "0px 8px 0px 12px", sm: "2px 8px 2px 14px" },
+            position: "relative",
+          }}
+          ref={textFieldRef}
+        >
           <TextField
             fullWidth
             placeholder="Ask a question..."
             value={userInput}
-            onChange={(e) => {
-              // console.log("Input changed to:", e.target.value); // Debug input
-              onInputChange(e.target.value);
-            }}
+            onChange={(e) => onInputChange(e.target.value)}
             multiline
-            maxRows={4}
-            inputRef={textFieldRef} // Ensure ref is on the input element
+            minRows={1}
+            maxRows={isMobile ? 3 : 5}
+            inputRef={inputElementRef}
             sx={{
               "& .MuiOutlinedInput-root": {
-                borderRadius: "10px",
-                paddingRight: "56px",
-                border: "1px solid #e0e0e0",
-                bgcolor: "white",
-                height: "50px",
+                border: "none",
+                borderRadius: "0",
+                backgroundColor: "transparent",
+                height: "auto",
+                paddingRight: "0 !important",
+                alignItems: "center",
+              },
+              "& .MuiOutlinedInput-notchedOutline": {
+                border: "none",
+              },
+              "& .MuiInputBase-inputMultiline": {
+                padding: "0 !important",
+                lineHeight: 1.4,
+              },
+              "& .MuiOutlinedInput-input": {
+                padding: "0",
+                color: "#333333",
+                fontSize: { xs: "0.8rem", sm: "0.9rem" },
+                lineHeight: 1.4,
+                flexGrow: 1,
+                minHeight: '1.4em',
               },
             }}
           />
 
-          <IconButton
-            color="primary"
-            onClick={onSend}
-            disabled={loading || !userInput.trim()}
-            sx={{
-              position: "absolute",
-              right: "8px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "text.primary",
-            }}
-          >
-            <SendIcon />
-          </IconButton>
+          <Tooltip title="Send" enterDelay={500}>
+            <IconButton
+              onClick={onSend}
+              disabled={loading || !userInput.trim()}
+              sx={{
+                flexShrink: 0,
+                backgroundColor: "#e60023",
+                color: "#ffffff",
+                width: { xs: 30, sm: 32 },
+                height: { xs: 30, sm: 32 },
+                "&:hover": {
+                  backgroundColor: "#cc001a",
+                  transform: "scale(1.05)",
+                },
+                "&:disabled": {
+                  backgroundColor: "#f0f0f0",
+                  color: "#bdbdbd",
+                },
+                borderRadius: "50%",
+                transition: "all 0.2s ease-in-out",
+                ml: { xs: 0.5, sm: 1 },
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <SendIcon sx={{ fontSize: { xs: 'small', sm: 'medium' } }} />
+            </IconButton>
+          </Tooltip>
+        </Paper>
 
-          <SmartSuggestions
-            userInput={userInput}
-            fullText={fullText}
-            onInputChange={onInputChange}
-            anchorEl={textFieldRef.current} // Pass the ref directly
-          />
-        </Box>
+        <SmartSuggestions
+          userInput={userInput}
+          fullText={fullText}
+          onInputChange={onInputChange}
+          anchorEl={inputElementRef.current}
+        />
       </Box>
     </Box>
   );

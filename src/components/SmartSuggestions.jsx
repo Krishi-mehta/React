@@ -7,7 +7,7 @@ function SmartSuggestions({ userInput, fullText, onInputChange, anchorEl }) {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // console.log("SmartSuggestions - userInput:", userInput, "fullText:", fullText);
+    console.log("SmartSuggestions - userInput:", userInput, "fullText:", fullText);
     if (!userInput.trim()) {
       setSuggestions([]);
       setIsOpen(false);
@@ -20,11 +20,11 @@ function SmartSuggestions({ userInput, fullText, onInputChange, anchorEl }) {
       words = fullText.toLowerCase().split(/\W+/).filter((w) => w.length > 3);
     }
     const uniqueTerms = [...new Set(words)];
-    // console.log("Extracted words:", uniqueTerms);
+    console.log("Extracted words:", uniqueTerms);
 
     const inputLower = userInput.toLowerCase();
     const matchingTerms = uniqueTerms.filter((term) => term.includes(inputLower));
-    // console.log("Matching terms:", matchingTerms);
+    console.log("Matching terms:", matchingTerms);
 
     const templates = [
       (term) => `What is ${term}?`,
@@ -58,7 +58,7 @@ function SmartSuggestions({ userInput, fullText, onInputChange, anchorEl }) {
         .slice(0, 5);
     }
 
-    // console.log("Generated suggestions:", allSuggestions);
+    console.log("Generated suggestions:", allSuggestions);
     setSuggestions(allSuggestions);
     setIsOpen(allSuggestions.length > 0);
   }, [userInput, fullText]);
@@ -91,23 +91,39 @@ function SmartSuggestions({ userInput, fullText, onInputChange, anchorEl }) {
     }
   }, [anchorEl, isOpen, suggestions]);
 
-  // console.log("Rendering Popper - anchorEl:", anchorEl, "isOpen:", isOpen);
+  console.log("Rendering Popper - anchorEl:", anchorEl, "isOpen:", isOpen);
   if (!isOpen || !anchorEl) return null;
 
   return (
     <Popper open={isOpen} anchorEl={anchorEl} placement="top-start" sx={{ zIndex: 1300, width: anchorEl.offsetWidth }}>
       <ClickAwayListener onClickAway={() => setIsOpen(false)}>
-        <Paper elevation={3} sx={{ maxHeight: 200, overflowY: "auto", borderRadius: 2 }}>
-          <MenuList>
+        <Paper
+          elevation={0} // Pinterest-style: no harsh shadows, use subtle ones instead
+          sx={{
+            maxHeight: 200, // Keeping your original height
+            overflowY: "auto", // Keeping your original overflow
+            borderRadius: 2, // Keeping your original border radius
+            bgcolor: '#ffffff', // Clean white background like Pinterest
+            boxShadow: '0 4px 12px rgba(0,0,0,0.08)', // Subtle, modern shadow
+            border: '1px solid #e0e0e0', // Very light, subtle border
+          }}
+        >
+          <MenuList sx={{ py: 0.5 }}> {/* Reduced vertical padding for MenuList for a tighter look */}
             {suggestions.map((suggestion, index) => (
               <MenuItem
                 key={index}
                 selected={index === selectedIndex}
                 onClick={() => handleSuggestionClick(suggestion)}
                 sx={{
-                  fontSize: "0.9rem",
-                  "&:hover": { backgroundColor: "#f0f0f0" },
-                  backgroundColor: index === selectedIndex ? "#e0e0e0" : "inherit",
+                  fontSize: "0.9rem", // Keeping your original font size
+                  color: '#333333', // Dark text for readability on light background
+                  py: 1, // Slightly reduced vertical padding for tighter items
+                  // Pinterest-style hover and selected states
+                  '&:hover': {
+                    backgroundColor: "#f5f5f5", // Very light grey on hover
+                  },
+                  backgroundColor: index === selectedIndex ? "#ededed" : "inherit", // Slightly darker light grey for selected
+                  fontWeight: index === selectedIndex ? 500 : 400, // Slightly bolder for selected item
                 }}
               >
                 {suggestion}

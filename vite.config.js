@@ -5,6 +5,9 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  optimizeDeps: {
+    include: ['pdfjs-dist/build/pdf.worker.min.js'],
+  },
   plugins: [react(),
     tailwindcss(),
   ],
