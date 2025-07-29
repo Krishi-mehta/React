@@ -73,6 +73,7 @@ function InputArea({
           width: { xs: "95%", sm: "85%", md: "70%", lg: "90%" },
           maxWidth: "800px",
           position: "relative",
+          alignItems:"center"
         }}
       >
         {/* Upload Button */}
