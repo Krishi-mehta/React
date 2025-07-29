@@ -71,6 +71,7 @@ function EmptyState() {
         variant="h6"
         fontSize={{ xs: "1rem", sm: "1.25rem" }} // Keeping your original font sizes
         sx={{
+          
           fontWeight: 600, // Slightly bolder for titles like Pinterest
           color: '#333333', // Darker text for main titles
           mt: 1, // Add a little margin top to separate from icon if needed
@@ -81,6 +82,7 @@ function EmptyState() {
       <Typography
         fontSize={{ xs: "0.85rem", sm: "1rem" }} // Keeping your original font sizes
         sx={{
+          wordBreak: 'break-word',
           color: '#767676', // Muted grey for descriptive text
           maxWidth: '300px', // Helps keep the text centered and readable
           mx: 'auto', // Center the text block itself

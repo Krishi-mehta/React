@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react"; // Added useCallback for handleRemoveFile
+import React, { useState, useEffect, useRef, useCallback } from "react";  
 import { Box, createTheme, ThemeProvider } from "@mui/material";
 import Sidebar from "./components/Sidebar";
 import ChatHeader from "./components/ChatHeader";
@@ -6,6 +6,8 @@ import MessageList from "./components/MessageList";
 import InputArea from "./components/InputArea";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import { useMediaQuery, useTheme as useMuiTheme } from "@mui/material";
+import mammoth from 'mammoth';
+import Tesseract from 'tesseract.js';
 
 // Attempt to import local worker, fall back to CDN
 let pdfjsWorker;
@@ -118,9 +120,15 @@ function App() {
   const handleFileChange = async (e) => {
     console.log("File change triggered");
     const uploadedFile = e.target.files[0];
+    if (!uploadedFile) return;
+
     let extractedText = ""; // Declare variable to hold extracted text
 
-    if (uploadedFile) {
+    setFile(null);
+    setFullText("");
+
+
+    if (uploadedFile.type === "application/pdf") {
       const arrayBuffer = await uploadedFile.arrayBuffer();
       try {
         const pdf = await getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
@@ -135,7 +143,66 @@ function App() {
         extractedText = "";
         alert("Failed to extract text from the PDF. Please use a text-based PDF or check the file.");
       }
+    }else if (uploadedFile.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+      // KEY CHANGE: Handle .docx files using mammoth.js
+      try {
+        const arrayBuffer = await uploadedFile.arrayBuffer();
+        const { value: docxText } = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+        extractedText = docxText;
+        console.log("Extracted DOCX text:", extractedText.substring(0, Math.min(extractedText.length, 100)) + "...");
+      } catch (error) {
+        console.error("DOCX extraction error:", error);
+        extractedText = `(Error extracting text from DOCX: ${uploadedFile.name}. File might be corrupted or an unsupported format.)`;
+        alert("Failed to extract text from DOCX. Please try another file.");
+      }
+    } else if (uploadedFile.type.startsWith("image/")) {
+      // KEY CHANGE: Handle image files using Tesseract.js for OCR
+      try {
+        setLoading(true); // Show loading while OCR is in progress
+        const { data: { text } } = await Tesseract.recognize(
+          uploadedFile, // Tesseract.js can directly take a File object
+          'eng', // Specify the language for OCR (e.g., 'eng' for English)
+          { logger: m => console.log(m) } // Optional: logs OCR progress to console
+        );
+        extractedText = text;
+        console.log("Extracted OCR text from image:", extractedText.substring(0, Math.min(extractedText.length, 100)) + "...");
+      } catch (error) {
+        console.error("OCR error:", error);
+        extractedText = `(Error performing OCR on image: ${uploadedFile.name}. Image might be unreadable or OCR failed.)`;
+        alert("Failed to perform OCR on image. Please try another image or ensure text is clear.");
+      } finally {
+        setLoading(false); // Hide loading after OCR is done (or failed)
+      }
+    } else if (uploadedFile.type === "text/plain") {
+      // Plain text file handling (Your existing logic)
+      try {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          extractedText = event.target.result;
+          setFullText(extractedText);
+          setFile(uploadedFile);
+          setChats(
+            chats.map((chat) =>
+              chat.id === activeChat
+                ? { ...chat, file: uploadedFile, fullText: extractedText }
+                : chat
+            )
+          );
+          console.log("Extracted plain text:", extractedText.substring(0, Math.min(extractedText.length, 100)) + "...");
+        };
+        reader.readAsText(uploadedFile);
+        return; // Exit early as setFullText and setFile are handled in reader.onload
+      } catch (error) {
+        console.error("Error reading text file:", error);
+        extractedText = "";
+        alert("Failed to read text file.");
+      }
+    } else {
+      // KEY CHANGE: Fallback for other unsupported types
+      extractedText = `(File: ${uploadedFile.name} attached. Type: ${uploadedFile.type}. Text extraction not supported on frontend.)`;
+      console.log("Unsupported file type attached:", uploadedFile.name);
     }
+
 
     // Update the states AFTER text extraction is complete
     setFile(uploadedFile || null);
@@ -198,9 +265,12 @@ function App() {
     setUserInput("");
     setLoading(true);
 
-    const contentToSend = file
-      ? `${userInput} Use the following resume text for reference: ${fullText}`
-      : userInput;
+    let contentToSend = userInput;
+    // KEY CHANGE: Include fullText from currentChat, which holds extracted text or a placeholder
+    const currentChatData = chats.find(c => c.id === activeChat);
+    if (currentChatData && currentChatData.fullText) {
+        contentToSend += `\n\n[File Context: ${currentChatData.file ? currentChatData.file.name : 'Unknown File'}]\n${currentChatData.fullText}`;
+    }
 
     try {
       const response = await fetch(

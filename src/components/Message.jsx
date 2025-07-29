@@ -36,7 +36,7 @@ const Message = ({ message }) => {
         sx={{
           display: "flex",
           // Changed from flex-end to center to vertically align avatars with the pill bubble
-          alignItems: "center", // This is a visual alignment change, not a dimension change
+          // alignItems: "center", // This is a visual alignment change, not a dimension change
           // EXACTLY AS PROVIDED: maxWidth, gap, flexDirection
           maxWidth: { xs: "90%", sm: "80%", md: "70%" },
           gap: 1.2,
@@ -83,7 +83,7 @@ const Message = ({ message }) => {
               ? "#e0e0e0" // Very light grey for user messages
               : "#ffffff", // Pure white for AI messages
             // Pinterest-style perfect pill-shaped border radius - using a large number for robustness
-            borderRadius: 9999, // Guarantees a pill shape
+            borderRadius: "40px", // Guarantees a pill shape
             // Subtle box shadow to give a slight lift, common in Pinterest UI
             boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.05)",
             border: "none", // No border for a truly clean look
@@ -97,6 +97,7 @@ const Message = ({ message }) => {
               // Pinterest-specific visual changes
               color: "#333333", // Consistent dark grey text color for both
               fontWeight: 400, // Consistent standard font weight
+              wordBreak: 'break-word',
             }}
           >
             {message.text}

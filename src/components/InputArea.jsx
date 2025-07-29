@@ -17,10 +17,12 @@ function InputArea({
   onInputChange,
   onSend,
   onFileUpload,
+  onImageUpload,
   fullText,
   loading,
 }) {
   const fileInputRef = useRef(null);
+  const imageInputRef = useRef(null);
   const textFieldRef = useRef(null);
   const inputElementRef = useRef(null);
   const theme = useTheme();
@@ -109,7 +111,7 @@ function InputArea({
         <input
           type="file"
           hidden
-          accept=".pdf"
+          accept=".pdf,.doc,.docx,.txt,image/*"
           ref={fileInputRef}
           onChange={onFileUpload}
         />
