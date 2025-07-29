@@ -82,7 +82,7 @@ function Sidebar({
               color: "#e60023", // Pinterest red for the "Menu" title
             }}
           >
-            Menu
+            PDF GPT
           </Typography>
           <IconButton onClick={onClose} sx={{ '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}>
             <CloseIcon sx={{ color: "#767676" }} /> {/* Darker icon color for light background */}
