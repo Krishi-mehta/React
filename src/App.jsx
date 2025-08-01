@@ -12,14 +12,14 @@ function App() {
     <Box sx={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden" }}>
       <Routes>
         {/* Default route redirects to new chat */}
-        <Route path="/" element={<Navigate to="/chat/new" replace />} />
+        <Route path="/" element={<Navigate to="/chat/new"  />} />
 
         {/* This is the change: use /chat/:chatId */}
         <Route path="/chat/:chatId" element={<ChatContainer />} />
 
         {/* Catch all other routes and redirect to new chat */}
         {/* Make sure this is AFTER your specific routes */}
-        <Route path="*" element={<Navigate to="/chat/new" replace />} />
+        <Route path="*" element={<Navigate to="/chat/new"  />} />
       </Routes>
     </Box>
     // </ThemeProvider>

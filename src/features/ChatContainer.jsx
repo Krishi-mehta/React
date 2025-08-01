@@ -39,7 +39,7 @@ function ChatContainer() {
   const [fileUploadLoading, setFileUploadLoading] = useState(false); // Separate loading for file uploads
   const [userInput, setUserInput] = useState("");
   const [dragOver, setDragOver] = useState(false);
-  
+
   // Reference to abort controller for stopping API requests
   const abortControllerRef = useRef(null);
 
@@ -76,9 +76,9 @@ function ChatContainer() {
 
   // Helper functions to manage loading states per chat
   const setLoadingForChat = useCallback((chatId, loading) => {
-    setLoadingStates(prev => ({
+    setLoadingStates((prev) => ({
       ...prev,
-      [chatId]: loading
+      [chatId]: loading,
     }));
   }, []);
 
@@ -120,6 +120,13 @@ Please answer the question based on the document content. If the answer is not i
       ];
 
       console.log("Sending request to OpenRouter...");
+
+      console.log(" OpenRouter API Key in Vercel:", OPENROUTER_CONFIG.apiKey);
+      console.log(
+        " Full API URL:",
+        `${OPENROUTER_CONFIG.baseUrl}/chat/completions`
+      );
+      console.log(" Using Model:", OPENROUTER_CONFIG.model);
 
       const response = await fetch(
         `${OPENROUTER_CONFIG.baseUrl}/chat/completions`,
@@ -163,7 +170,7 @@ Please answer the question based on the document content. If the answer is not i
         usage: data.usage,
       };
     } catch (error) {
-      if (error.name === 'AbortError') {
+      if (error.name === "AbortError") {
         console.log("Request was aborted");
         throw new Error("Request was stopped by user");
       }
@@ -221,14 +228,16 @@ Please answer the question based on the document content. If the answer is not i
     async (event) => {
       const file = event.target.files[0];
       if (!file) return;
-      
+
       // Check if file is an image
       if (file.type.startsWith("image/")) {
-        alert("Image uploads are not supported. Please upload a PDF, DOC, DOCX, or TXT file.");
+        alert(
+          "Image uploads are not supported. Please upload a PDF, DOC, DOCX, or TXT file."
+        );
         event.target.value = null;
         return;
       }
-      
+
       if (file) await handleFileUpload(file);
       event.target.value = null;
     },
@@ -249,18 +258,20 @@ Please answer the question based on the document content. If the answer is not i
     async (e) => {
       e.preventDefault();
       setDragOver(false);
-  
+
       const files = Array.from(e.dataTransfer.files);
       if (files.length > 0) {
         const file = files[0];
         const allowedTypes = [".pdf", ".doc", ".docx", ".txt"]; // Removed image/*
-        
+
         // Check if file is an image
         if (file.type.startsWith("image/")) {
-          alert("Image uploads are not supported. Please upload a PDF, DOC, DOCX, or TXT file.");
+          alert(
+            "Image uploads are not supported. Please upload a PDF, DOC, DOCX, or TXT file."
+          );
           return;
         }
-  
+
         const fileExtension = "." + file.name.split(".").pop().toLowerCase();
         if (allowedTypes.includes(fileExtension)) {
           await handleFileUpload(file);
@@ -273,30 +284,34 @@ Please answer the question based on the document content. If the answer is not i
   );
 
   // Function to handle editing a message
-  const handleEditMessage = useCallback((messageIndex, messageText) => {
-    if (!currentChat || !chatId) return;
+  const handleEditMessage = useCallback(
+    (messageIndex, messageText) => {
+      if (!currentChat || !chatId) return;
 
-    // Set the message text in the input
-    setUserInput(messageText);
+      // Set the message text in the input
+      setUserInput(messageText);
 
-    // Remove all messages from the selected index onwards
-    setChats((prevChats) =>
-      prevChats.map((chat) =>
-        chat.id === chatId
-          ? {
-              ...chat,
-              messages: chat.messages.slice(0, messageIndex),
-            }
-          : chat
-      )
-    );
+      // Remove all messages from the selected index onwards
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat.id === chatId
+            ? {
+                ...chat,
+                messages: chat.messages.slice(0, messageIndex),
+              }
+            : chat
+        )
+      );
 
-    // Focus on the input area (you might need to pass a ref to InputArea for this)
-    // This will be handled by the InputArea component
-  }, [currentChat, chatId, setUserInput, setChats]);
+      // Focus on the input area (you might need to pass a ref to InputArea for this)
+      // This will be handled by the InputArea component
+    },
+    [currentChat, chatId, setUserInput, setChats]
+  );
 
   const onSendMessage = useCallback(async () => {
-    if (!userInput.trim() || currentChatLoading || !currentChat || !chatId) return;
+    if (!userInput.trim() || currentChatLoading || !currentChat || !chatId)
+      return;
 
     // Check if API key is configured
     if (!OPENROUTER_CONFIG.apiKey) {
@@ -442,9 +457,9 @@ Please answer the question based on the document content. If the answer is not i
         }
         return updatedChats;
       });
-      
+
       // Clean up loading state for deleted chat
-      setLoadingStates(prev => {
+      setLoadingStates((prev) => {
         const { [idToDelete]: _, ...rest } = prev;
         return rest;
       });
@@ -466,7 +481,7 @@ Please answer the question based on the document content. If the answer is not i
         return chat;
       });
       setChats(updatedChats);
-      
+
       // Clear loading state for this chat
       setLoadingForChat(chatId, false);
       navigate("/chat/new");
@@ -698,7 +713,8 @@ function NewChatView({
               fontSize: { xs: "0.75rem", sm: "0.875rem" },
             }}
           >
-             Click or Drag & Drop to upload PDF, DOC, DOCX, or TXT files (up to 15MB)
+            Click or Drag & Drop to upload PDF, DOC, DOCX, or TXT files (up to
+            15MB)
           </Typography>
 
           <input
@@ -798,9 +814,9 @@ function ChatView({
         isMobile={isMobile}
         onRemoveFile={onRemoveFile}
       />
-      <MessageList 
-        messages={currentChat.messages} 
-        loading={loading} 
+      <MessageList
+        messages={currentChat.messages}
+        loading={loading}
         onEditMessage={onEditMessage} // Pass edit function to MessageList
       />
       <InputArea
