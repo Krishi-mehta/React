@@ -6,15 +6,15 @@ import {
   ListItem,
   ListItemText,
   Button,
-  Divider,
   Typography,
   IconButton,
   TextField,
+  useTheme,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'; // For chat list icon
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 
 function Sidebar({
   open,
@@ -26,10 +26,27 @@ function Sidebar({
   isMobile,
   onEdit,
   onDelete,
+  isStatic = false
 }) {
+  const theme = useTheme();
   const [editingChatId, setEditingChatId] = useState(null);
   const [editedTitle, setEditedTitle] = useState("");
   const [hoveredChatId, setHoveredChatId] = useState(null);
+
+  // Exact color definitions matching current appearance
+  const colors = {
+    sidebarBg: "#1f1e1d",
+    sidebarText: "#ffffff",
+    divider: "#333333",
+    primary: "#6366F1",
+    primaryHover: "#5A5FE0",
+    secondaryText: "#9CA3AF",
+    icon: "#6B7280",
+    hoverBg: "rgba(255,255,255,0.05)",
+    activeChatBg: "rgba(99, 102, 241, 0.1)",
+    activeChatHoverBg: "rgba(99, 102, 241, 0.15)",
+    editBg: "rgba(255,255,255,0.1)"
+  };
 
   const handleEditClick = (chat) => {
     setEditingChatId(chat.id);
@@ -56,195 +73,240 @@ function Sidebar({
       ModalProps={{ keepMounted: true }}
       sx={{
         "& .MuiDrawer-paper": {
-          width: { xs: "100vw", sm: 300 }, // Keeping your original width
-          maxWidth: "100vw", // Keeping your original max-width
-          padding: { xs: 1, sm: 2 }, // Keeping your original padding
-          // Pinterest-like light background for the sidebar
-          bgcolor: "#f8f8f8", // Very light grey, almost white
-          color: "#333333", // Dark text for light background
+          width: 280,
+          maxWidth: "100vw", 
+          padding: 0,
+          bgcolor: colors.sidebarBg,
+          color: colors.sidebarText,
           boxSizing: "border-box",
-          boxShadow: '0 4px 12px rgba(0,0,0,0.08)', // Subtle shadow for depth
+          borderRight: `1px solid ${colors.divider}`,
+          display: "flex",
+          flexDirection: "column",
         },
       }}
     >
-      <Box>
-        {/* Header */}
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={2} // Keeping your original margin
-        >
-          <Typography
-            fontWeight="bold"
-            fontSize={{ xs: "1rem", sm: "1.25rem" }} // Keeping your original font size
+      {/* Header */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          p: 2,
+          borderBottom: `1px solid ${colors.divider}`,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box
             sx={{
-              color: "#e60023", // Pinterest red for the "Menu" title
+              width: 24,
+              height: 24,
+              bgcolor: colors.primary,
+              borderRadius: "4px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            PDF GPT
+            <Typography sx={{ color: "white", fontSize: "12px", fontWeight: "bold" }}>
+              FM
+            </Typography>
+          </Box>
+          <Typography
+            sx={{
+              fontWeight: 600,
+              fontSize: "18px",
+              color: colors.sidebarText,
+            }}
+          >
+            FileMentor
           </Typography>
-          <IconButton onClick={onClose} sx={{ '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}>
-            <CloseIcon sx={{ color: "#767676" }} /> {/* Darker icon color for light background */}
-          </IconButton>
         </Box>
+        
+        {!isStatic && (
+          <IconButton 
+            onClick={onClose} 
+            sx={{ 
+              color: colors.secondaryText,
+              '&:hover': { 
+                bgcolor: colors.hoverBg,
+                color: colors.sidebarText
+              } 
+            }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        )}
+      </Box>
 
-        {/* New Chat Button - Pinterest Style */}
+      {/* New Chat Button */}
+      <Box sx={{ p: 2 }}>
         <Button
           fullWidth
           variant="contained"
           sx={{
-            mb: 2, // Keeping your original margin
-            bgcolor: "#e60023", // Pinterest red for the new chat button
-            color: "#fff",
-            fontSize: { xs: "0.75rem", sm: "0.9rem" }, // Keeping your original font size
-            borderRadius: 8, // More rounded for Pinterest feel (like a pill)
-            py: 1.2, // Slightly more vertical padding for button, for a clickier feel
-            boxShadow: '0 2px 5px rgba(230,0,35,0.3)', // Subtle red shadow
+            bgcolor: colors.primary,
+            color: colors.sidebarText,
+            fontSize: "14px",
+            borderRadius: "8px",
+            py: 1.5,
+            textTransform: 'none',
+            fontWeight: 500,
+            boxShadow: 'none',
             '&:hover': {
-              bgcolor: "#b3001a", // Darker red on hover
-              boxShadow: '0 4px 10px rgba(230,0,35,0.4)', // Slightly more pronounced shadow on hover
+              bgcolor: colors.primaryHover,
             },
           }}
           onClick={onNewChat}
         >
-          + New Chat
+          + New chat
         </Button>
+      </Box>
 
-        {/* Divider - Pinterest Style */}
-        <Divider sx={{
-          borderColor: "rgba(0,0,0,0.1)", // Very subtle dark border for light background
-          bgcolor: "transparent",
-          mb: 2 // Keeping your original margin
-        }} />
-
-        {/* Chat List */}
-        <List disablePadding>
-          {chats.map((chat) => (
-            <ListItem
-              key={chat.id}
+      {/* Chat List */}
+      <Box sx={{ flexGrow: 1, overflowY: 'auto', px: 2 }}>
+        {chats.length > 0 && (
+          <>
+            <Typography
               sx={{
-                // Active chat background: slightly darker light grey for contrast
-                backgroundColor: chat.id === activeChat ? "#ededed" : "transparent", // Very light grey for active, transparent for inactive
-                color: chat.id === activeChat ? "#333333" : "#767676", // Dark text for active, muted grey for inactive
-                mb: 1, // Keeping your original margin
-                p: 1.5, // Keeping your original padding
-                borderRadius: 4, // More rounded corners for list items
-                justifyContent: "space-between",
-                alignItems: "center",
-                cursor: "pointer",
-                transition: "background-color 0.2s, color 0.2s",
-                '&:hover': {
-                  backgroundColor: "#f0f0f0", // Slightly darker light grey on hover
-                  color: "#333333", // Ensure text is dark on hover
-                },
+                color: colors.secondaryText,
+                fontSize: "12px",
+                fontWeight: 500,
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+                mb: 1,
+                px: 1,
               }}
-              onClick={() => onChatSelect(chat.id)}
-              onMouseEnter={() => setHoveredChatId(chat.id)}
-              onMouseLeave={() => setHoveredChatId(null)}
             >
-              {editingChatId === chat.id ? (
-                <Box
+              Today
+            </Typography>
+            
+            <List disablePadding>
+              {chats.map((chat) => (
+                <ListItem
+                  key={chat.id}
                   sx={{
-                    flexGrow: 1,
-                    // White background for the edit field
-                    backgroundColor: "#ffffff",
-                    borderRadius: 2,
-                    px: 1,
-                    py: 0.5,
+                    backgroundColor: chat.id === activeChat ? colors.activeChatBg : "transparent",
+                    color: chat.id === activeChat ? colors.sidebarText : colors.secondaryText,
+                    mb: 0.5,
+                    p: 1,
+                    borderRadius: "8px",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    '&:hover': {
+                      backgroundColor: chat.id === activeChat ? colors.activeChatHoverBg : colors.hoverBg,
+                      color: colors.sidebarText,
+                    },
                   }}
+                  onClick={() => onChatSelect(chat.id)}
+                  onMouseEnter={() => setHoveredChatId(chat.id)}
+                  onMouseLeave={() => setHoveredChatId(null)}
                 >
-                  <TextField
-                    fullWidth
-                    variant="standard"
-                    value={editedTitle}
-                    onChange={(e) => setEditedTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleSaveEdit(chat.id);
-                      if (e.key === "Escape") handleCancelEdit();
-                    }}
-                    onBlur={() => handleSaveEdit(chat.id)}
-                    InputProps={{
-                      disableUnderline: true,
-                      sx: {
-                        color: "#333333", // Dark text for edit field
-                        fontSize: "0.9rem", // Retaining original font size
-                        px: 1,
-                      },
-                    }}
-                    autoFocus
-                  />
-                </Box>
-              ) : (
-                <>
-                  <ChatBubbleOutlineIcon
-                    sx={{
-                      mr: 1.5, // Space between icon and text
-                      color: chat.id === activeChat ? "#e60023" : "#a0a0a0", // Pinterest red for active, softer grey for inactive
-                      fontSize: "small", // Keeping small size
-                    }}
-                  />
-                  <ListItemText
-                    primary={chat.title}
-                    primaryTypographyProps={{
-                      sx: {
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        fontSize: { xs: "0.75rem", sm: "1rem" }, // Keeping original font size
-                        fontWeight: chat.id === activeChat ? 600 : 400, // Bolder for active chat
-                        // Color inherited from ListItem
-                      },
-                    }}
-                  />
-                  {(hoveredChatId === chat.id || editingChatId === chat.id) && (
+                  {editingChatId === chat.id ? (
                     <Box
                       sx={{
-                        display: "flex",
-                        gap: 0.5, // Retaining original gap
-                        opacity: 1,
-                        transition: "opacity 0.2s",
+                        flexGrow: 1,
+                        backgroundColor: colors.editBg,
+                        borderRadius: "4px",
+                        px: 1,
+                        py: 0.5,
                       }}
                     >
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditClick(chat);
+                      <TextField
+                        fullWidth
+                        variant="standard"
+                        value={editedTitle}
+                        onChange={(e) => setEditedTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSaveEdit(chat.id);
+                          if (e.key === "Escape") handleCancelEdit();
                         }}
-                        sx={{
-                            color: "#767676", // Muted grey icons for light background
-                            '&:hover': {
-                                bgcolor: 'rgba(0,0,0,0.05)', // Subtle hover background
-                                color: "#333333", // Darker on hover
-                            }
+                        onBlur={() => handleSaveEdit(chat.id)}
+                        InputProps={{
+                          disableUnderline: true,
+                          sx: {
+                            color: colors.sidebarText,
+                            fontSize: "14px",
+                          },
                         }}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(chat.id);
-                        }}
-                        sx={{
-                            color: "#767676", // Muted grey icons
-                            '&:hover': {
-                                bgcolor: 'rgba(0,0,0,0.05)', // Subtle hover background
-                                color: "#333333", // Darker on hover
-                            }
-                        }}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
+                        autoFocus
+                      />
                     </Box>
+                  ) : (
+                    <>
+                      <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1, minWidth: 0 }}>
+                        <ChatBubbleOutlineIcon
+                          sx={{
+                            mr: 1.5,
+                            color: chat.id === activeChat ? colors.primary : colors.icon,
+                            fontSize: "16px",
+                            flexShrink: 0,
+                          }}
+                        />
+                        <ListItemText
+                          primary={chat.title}
+                          primaryTypographyProps={{
+                            sx: {
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              fontSize: "14px",
+                              fontWeight: chat.id === activeChat ? 500 : 400,
+                            },
+                          }}
+                        />
+                      </Box>
+                      {hoveredChatId === chat.id && (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            gap: 0.5,
+                            opacity: 1,
+                            transition: "opacity 0.2s",
+                          }}
+                        >
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditClick(chat);
+                            }}
+                            sx={{
+                              color: colors.secondaryText,
+                              '&:hover': {
+                                bgcolor: colors.hoverBg,
+                                color: colors.sidebarText,
+                              }
+                            }}
+                          >
+                            <EditIcon sx={{ fontSize: "14px" }} />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDelete(chat.id);
+                            }}
+                            sx={{
+                              color: colors.secondaryText,
+                              '&:hover': {
+                                bgcolor: colors.hoverBg,
+                                color: colors.sidebarText,
+                              }
+                            }}
+                          >
+                            <DeleteIcon sx={{ fontSize: "14px" }} />
+                          </IconButton>
+                        </Box>
+                      )}
+                    </>
                   )}
-                </>
-              )}
-            </ListItem>
-          ))}
-        </List>
+                </ListItem>
+              ))}
+            </List>
+          </>
+        )}
       </Box>
     </Drawer>
   );

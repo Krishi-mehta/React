@@ -1,13 +1,14 @@
-import React, { useRef, useEffect } from "react"; // Added useEffect for potential future scroll
-import { Box, Typography } from "@mui/material";
-import { Forum } from "@mui/icons-material";
+import React, { useRef, useEffect } from "react";
+import { Box, Typography, useTheme } from "@mui/material";
+import { ChatBubbleOutline } from "@mui/icons-material";
 import Message from "./Message";
 import LoadingMessage from "./LoadingMessage";
 
 function MessageList({ messages, loading }) {
+  const theme = useTheme();
   const messagesEndRef = useRef(null);
 
-  // Optional: Auto-scroll to bottom on new messages/loading
+  // Auto-scroll to bottom on new messages/loading
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
@@ -17,19 +18,18 @@ function MessageList({ messages, loading }) {
       sx={{
         flexGrow: 1,
         overflowY: "auto",
-        px: { xs: 1, sm: 2, md: 5 }, // Keeping your original padding
-        py: 1, // Keeping your original padding
+        px: { xs: 1, sm: 2, md: 3, lg: 20 },
+        py: 2,
         display: "flex",
         flexDirection: "column",
-        gap: 1.5, // Keeping your original gap
+        gap: 2,
         minHeight: 0,
         maxHeight: "100%",
-        // Pinterest-like background for the chat area itself
-        bgcolor: '#ffffff', // Clean white background for the chat area
+        bgcolor: theme.palette.background.default,
       }}
     >
       {messages.length === 0 ? (
-        <EmptyState />
+        <EmptyState theme={theme} />
       ) : (
         messages.map((message, index) => (
           <Message key={index} message={message} />
@@ -42,53 +42,68 @@ function MessageList({ messages, loading }) {
   );
 }
 
-function EmptyState() {
+function EmptyState({ theme }) {
+  // Define colors with theme fallbacks
+  const iconBg = theme.palette.grey[100] || "#F3F4F6";
+  const iconColor = theme.palette.text.secondary || "#6B7280";
+  const headingColor = theme.palette.text.primary || "#343541";
+  const textColor = theme.palette.text.secondary || "#6B7280";
+
   return (
     <Box
       sx={{
         flexGrow: 1,
         display: "flex",
         flexDirection: "column",
-        alignItems: "center", // Keeping your original alignment
-        justifyContent: "center", // Keeping your original alignment
-        textAlign: "center", // Keeping your original alignment
-        color: "#a0a0a0", // Soft grey for text.secondary equivalent, Pinterest often uses softer tones
-        px: 2, // Keeping your original padding
-        py: 4, // Keeping your original padding
-        // No specific background here, will inherit from parent MessageList's bgcolor
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+        px: 3,
+        py: 8,
       }}
     >
-      <Forum
+      <Box
         sx={{
-          fontSize: { xs: 36, sm: 40 },
-          mb: 1,
-          color: '#e60023', // Pinterest red for the icon
-          // Optional: Subtle shadow for the icon for a lifted feel, if desired
-          // textShadow: '0 1px 2px rgba(0,0,0,0.1)',
-        }}
-      />
-      <Typography
-        variant="h6"
-        fontSize={{ xs: "1rem", sm: "1.25rem" }} // Keeping your original font sizes
-        sx={{
-          
-          fontWeight: 600, // Slightly bolder for titles like Pinterest
-          color: '#333333', // Darker text for main titles
-          mt: 1, // Add a little margin top to separate from icon if needed
+          width: 70,
+          height: 70,
+          borderRadius: "50%",
+          bgcolor: iconBg,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          mb: 3,
         }}
       >
-        Start a conversation
+        <ChatBubbleOutline
+          sx={{
+            fontSize: 35,
+            color: iconColor,
+          }}
+        />
+      </Box>
+
+      <Typography
+        variant="h5"
+        sx={{
+          color: headingColor,
+          fontWeight: 600,
+          mb: 1.5,
+          fontSize: { xs: "1.25rem", sm: "1.5rem" },
+        }}
+      >
+        How can I help you today?
       </Typography>
+
       <Typography
-        fontSize={{ xs: "0.85rem", sm: "1rem" }} // Keeping your original font sizes
+        variant="body1"
         sx={{
-          wordBreak: 'break-word',
-          color: '#767676', // Muted grey for descriptive text
-          maxWidth: '300px', // Helps keep the text centered and readable
-          mx: 'auto', // Center the text block itself
+          color: textColor,
+          maxWidth: '450px',
+          lineHeight: 1.5,
+          fontSize: { xs: "0.9rem", sm: "1rem" },
         }}
       >
-        Upload PDFs and ask questions about their content
+        I can help you analyze and answer questions about your uploaded documents. Ask me anything!
       </Typography>
     </Box>
   );

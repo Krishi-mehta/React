@@ -1,17 +1,35 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Popper, Paper, MenuList, MenuItem, ClickAwayListener } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { 
+  Popper, 
+  Paper, 
+  MenuList, 
+  MenuItem, 
+  ClickAwayListener,
+  useTheme 
+} from "@mui/material";
 
 function SmartSuggestions({ userInput, fullText, onInputChange, anchorEl }) {
+  const theme = useTheme();
   const [suggestions, setSuggestions] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [isOpen, setIsOpen] = useState(false);
 
+  // Define colors with theme fallbacks
+  const colors = {
+    bgColor: theme.palette.background.paper || '#ffffff',
+    borderColor: theme.palette.divider || '#e5e7eb',
+    textColor: theme.palette.text.primary || '#374151',
+    hoverBg: theme.palette.action.hover || '#f3f4f6',
+    selectedBg: theme.palette.action.selected || '#eff6ff',
+    selectedText: theme.palette.primary.main || '#1d4ed8',
+    selectedHoverBg: theme.palette.action.selected || '#dbeafe',
+    shadow: theme.shadows[4] || '0 10px 25px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05)'
+  };
+
   useEffect(() => {
-    console.log("SmartSuggestions - userInput:", userInput, "fullText:", fullText);
     if (!userInput.trim()) {
       setSuggestions([]);
       setIsOpen(false);
-      console.log("No suggestions due to empty input");
       return;
     }
 
@@ -20,45 +38,41 @@ function SmartSuggestions({ userInput, fullText, onInputChange, anchorEl }) {
       words = fullText.toLowerCase().split(/\W+/).filter((w) => w.length > 3);
     }
     const uniqueTerms = [...new Set(words)];
-    console.log("Extracted words:", uniqueTerms);
 
     const inputLower = userInput.toLowerCase();
     const matchingTerms = uniqueTerms.filter((term) => term.includes(inputLower));
-    console.log("Matching terms:", matchingTerms);
 
     const templates = [
       (term) => `What is ${term}?`,
       (term) => `How is ${term} used?`,
-      (term) => `Explain ${term} in the context of the resume`,
-      (term) => `What experience involves ${term}?`,
+      (term) => `Explain ${term} in the context of the document`,
+      (term) => `What information involves ${term}?`,
     ];
 
     let allSuggestions = [];
     if (matchingTerms.length > 0) {
       allSuggestions = matchingTerms
-        .slice(0, 10)
+        .slice(0, 8)
         .flatMap((term) => templates.map((t) => t(term)))
-        .slice(0, 5);
+        .slice(0, 4);
     } else {
-      // Dynamically generate suggestions from resume words or fallback words
-      const availableTerms = uniqueTerms.length > 0 ? uniqueTerms : ["skills", "experience", "projects", "education"];
+      const availableTerms = uniqueTerms.length > 0 ? uniqueTerms : ["content", "information", "details", "summary"];
       const questionStems = [
-        "What is your",
-        "How do you use",
+        "What is the main",
         "Can you explain",
-        "What experience do you have with",
+        "What does this document say about",
+        "Tell me about",
       ];
       allSuggestions = availableTerms
-        .sort(() => 0.5 - Math.random()) // Randomize terms
-        .slice(0, 5)
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 4)
         .flatMap((term) =>
           questionStems.sort(() => 0.5 - Math.random()).slice(0, 1).map((stem) => `${stem} ${term}?`)
         )
         .filter(s => s.toLowerCase().includes(inputLower))
-        .slice(0, 5);
+        .slice(0, 4);
     }
 
-    console.log("Generated suggestions:", allSuggestions);
     setSuggestions(allSuggestions);
     setIsOpen(allSuggestions.length > 0);
   }, [userInput, fullText]);
@@ -91,39 +105,57 @@ function SmartSuggestions({ userInput, fullText, onInputChange, anchorEl }) {
     }
   }, [anchorEl, isOpen, suggestions]);
 
-  console.log("Rendering Popper - anchorEl:", anchorEl, "isOpen:", isOpen);
   if (!isOpen || !anchorEl) return null;
 
   return (
-    <Popper open={isOpen} anchorEl={anchorEl} placement="top-start" sx={{ zIndex: 1300, width: anchorEl.offsetWidth }}>
+    <Popper 
+      open={isOpen} 
+      anchorEl={anchorEl} 
+      placement="top-start" 
+      sx={{ 
+        zIndex: theme.zIndex.tooltip, 
+        width: anchorEl.offsetWidth,
+        mt: -1
+      }}
+    >
       <ClickAwayListener onClickAway={() => setIsOpen(false)}>
         <Paper
-          elevation={0} // Pinterest-style: no harsh shadows, use subtle ones instead
+          elevation={3}
           sx={{
-            maxHeight: 200, // Keeping your original height
-            overflowY: "auto", // Keeping your original overflow
-            borderRadius: 2, // Keeping your original border radius
-            bgcolor: '#ffffff', // Clean white background like Pinterest
-            boxShadow: '0 4px 12px rgba(0,0,0,0.08)', // Subtle, modern shadow
-            border: '1px solid #e0e0e0', // Very light, subtle border
+            maxHeight: 240,
+            overflowY: "auto",
+            borderRadius: 2,
+            bgcolor: colors.bgColor,
+            boxShadow: colors.shadow,
+            border: `1px solid ${colors.borderColor}`,
           }}
         >
-          <MenuList sx={{ py: 0.5 }}> {/* Reduced vertical padding for MenuList for a tighter look */}
+          <MenuList sx={{ py: 0.5 }}>
             {suggestions.map((suggestion, index) => (
               <MenuItem
                 key={index}
                 selected={index === selectedIndex}
                 onClick={() => handleSuggestionClick(suggestion)}
                 sx={{
-                  fontSize: "0.9rem", // Keeping your original font size
-                  color: '#333333', // Dark text for readability on light background
-                  py: 1, // Slightly reduced vertical padding for tighter items
-                  // Pinterest-style hover and selected states
+                  fontSize: "0.875rem",
+                  color: colors.textColor,
+                  py: 1.5,
+                  px: 2,
+                  minHeight: 'auto',
                   '&:hover': {
-                    backgroundColor: "#f5f5f5", // Very light grey on hover
+                    backgroundColor: colors.hoverBg,
                   },
-                  backgroundColor: index === selectedIndex ? "#ededed" : "inherit", // Slightly darker light grey for selected
-                  fontWeight: index === selectedIndex ? 500 : 400, // Slightly bolder for selected item
+                  '&.Mui-selected': {
+                    backgroundColor: colors.selectedBg,
+                    color: colors.selectedText,
+                    '&:hover': {
+                      backgroundColor: colors.selectedHoverBg,
+                    },
+                  },
+                  fontWeight: index === selectedIndex ? 500 : 400,
+                  borderRadius: 1,
+                  mx: 0.5,
+                  my: 0.25,
                 }}
               >
                 {suggestion}

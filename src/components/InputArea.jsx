@@ -8,7 +8,6 @@ import {
   useMediaQuery,
   Paper,
 } from "@mui/material";
-import UploadFileIcon from "@mui/icons-material/UploadFile";
 import SendIcon from "@mui/icons-material/Send";
 import SmartSuggestions from "./SmartSuggestions";
 
@@ -16,17 +15,22 @@ function InputArea({
   userInput,
   onInputChange,
   onSend,
-  onFileUpload,
-  onImageUpload,
   fullText,
   loading,
 }) {
-  const fileInputRef = useRef(null);
-  const imageInputRef = useRef(null);
   const textFieldRef = useRef(null);
   const inputElementRef = useRef(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  // Safe color access with fallbacks
+  const primaryColor = theme.palette.primary.main || "#7247EE";
+  const primaryDarkColor = theme.palette.primary.dark || "#5A3AA6";
+  const borderColor = theme.palette.divider || "#E0E0E0";
+  const hoverBorderColor = theme.palette.action.hoverBorder || "#BDBDBD";
+  const disabledBgColor = theme.palette.action.disabledBackground || "#E0E0E0";
+  const disabledColor = theme.palette.action.disabled || "#BDBDBD";
+  const textColor = theme.palette.text.primary || "#343541";
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -56,9 +60,8 @@ function InputArea({
     <Box
       sx={{
         p: { xs: 0.8, sm: 1.2 },
-        bgcolor: "#ffffff",
-        borderTop: "1px solid #efefef",
-        boxShadow: "0 -2px 8px rgba(0,0,0,0.03)",
+        bgcolor: theme.palette.background.paper,
+        boxShadow: theme.shadows[1],
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -72,72 +75,34 @@ function InputArea({
         gap={1}
         alignItems="flex-end"
         sx={{
-          width: { xs: "95%", sm: "85%", md: "70%", lg: "90%" },
+          width: { xs: "95%", sm: "85%", md: "70%", lg: "60%" },
           maxWidth: "800px",
           position: "relative",
-          alignItems:"center"
+          alignItems: "center"
         }}
       >
-        {/* Upload Button */}
-        <Tooltip title="Upload PDF" enterDelay={500}>
-          <IconButton
-            onClick={() => fileInputRef.current.click()}
-            sx={{
-              flexShrink: 0,
-              color: "#767676",
-              backgroundColor: "transparent",
-              border: "1px solid #e0e0e0",
-              "&:hover": {
-                backgroundColor: "#e60023",
-                borderColor: "#e60023",
-                color: "#ffffff",
-                transform: "scale(1.05)",
-              },
-              borderRadius: "50%",
-              width: { xs: 36, sm: 40 },
-              height: { xs: 36, sm: 40 },
-              transition: "all 0.2s ease-in-out",
-              boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            {/* Ensure the icon size is appropriate for the button size */}
-            <UploadFileIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
-          </IconButton>
-        </Tooltip>
-
-        <input
-          type="file"
-          hidden
-          accept=".pdf,.doc,.docx,.txt,image/*"
-          ref={fileInputRef}
-          onChange={onFileUpload}
-        />
-
-        {/* Input + Send Button Container (Pill Shape) */}
         <Paper
           elevation={0}
           sx={{
             flexGrow: 1,
             display: "flex",
             alignItems: "center",
-            borderRadius: "24px",
-            backgroundColor: "#efefef",
-            border: "1px solid #e0e0e0",
-            transition: "all 0.2s ease-in-out",
+            borderRadius: "18px",
+            backgroundColor: theme.palette.background.paper,
+            border: `1px solid ${borderColor}`,
+            transition: theme.transitions.create(['border-color', 'box-shadow'], {
+              duration: theme.transitions.duration.short,
+            }),
             "&:hover": {
-              borderColor: "#bdbdbd",
-              backgroundColor: "#e0e0e0",
+              borderColor: hoverBorderColor,
             },
             "&:focus-within": {
-              backgroundColor: "#ffffff",
-              borderColor: "#e60023",
-              boxShadow: "0 0 0 2px rgba(230, 0, 35, 0.25)",
+              backgroundColor: theme.palette.background.paper,
+              borderColor: primaryColor,
+              boxShadow: `0 0 0 1px ${primaryColor}`,
             },
-            minHeight: { xs: "38px", sm: "40px" },
-            padding: { xs: "0px 8px 0px 12px", sm: "2px 8px 2px 14px" },
+            minHeight: { xs: "36px", sm: "40px" },
+            padding: { xs: "0px 10px 0px 10px", sm: "0px 10px 0px 10px" },
             position: "relative",
           }}
           ref={textFieldRef}
@@ -165,15 +130,17 @@ function InputArea({
               },
               "& .MuiInputBase-inputMultiline": {
                 padding: "0 !important",
-                lineHeight: 1.4,
+                lineHeight: 1.3,
+                display: 'flex',
+                alignItems: 'center',
               },
               "& .MuiOutlinedInput-input": {
                 padding: "0",
-                color: "#333333",
+                color: textColor,
                 fontSize: { xs: "0.8rem", sm: "0.9rem" },
-                lineHeight: 1.4,
+                lineHeight: 1.3,
                 flexGrow: 1,
-                minHeight: '1.4em',
+                minHeight: '10px',
               },
             }}
           />
@@ -184,27 +151,29 @@ function InputArea({
               disabled={loading || !userInput.trim()}
               sx={{
                 flexShrink: 0,
-                backgroundColor: "#e60023",
-                color: "#ffffff",
-                width: { xs: 30, sm: 32 },
-                height: { xs: 30, sm: 32 },
+                backgroundColor: primaryColor,
+                color: theme.palette.common.white,
+                width: { xs: 32, sm: 34 },
+                height: { xs: 32, sm: 34 },
                 "&:hover": {
-                  backgroundColor: "#cc001a",
-                  transform: "scale(1.05)",
+                  backgroundColor: primaryDarkColor,
                 },
                 "&:disabled": {
-                  backgroundColor: "#f0f0f0",
-                  color: "#bdbdbd",
+                  backgroundColor: disabledBgColor,
+                  color: disabledColor,
                 },
                 borderRadius: "50%",
-                transition: "all 0.2s ease-in-out",
-                ml: { xs: 0.5, sm: 1 },
+                transition: theme.transitions.create(['background-color'], {
+                  duration: theme.transitions.duration.short,
+                }),
+                ml: { xs: 0.8, sm: 1 },
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                boxShadow: theme.shadows[1],
               }}
             >
-              <SendIcon sx={{ fontSize: { xs: 'small', sm: 'medium' } }} />
+              <SendIcon sx={{ fontSize: { xs: 'small', sm: 'small' } }} />
             </IconButton>
           </Tooltip>
         </Paper>
