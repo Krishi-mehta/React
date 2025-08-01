@@ -20,6 +20,7 @@ const COLORS = {
 export const theme = createTheme({
   palette: {
     mode: 'light',
+    greys: COLORS.greys, 
     primary: {
       main: COLORS.primary,        // #f4c28e
       light: COLORS.secondary,     // #f4c7a8  

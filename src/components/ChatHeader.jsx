@@ -10,9 +10,9 @@ import {
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
-import CloseIcon from "@mui/icons-material/Close";
+// import CloseIcon from "@mui/icons-material/Close";
 
-function ChatHeader({ title, file, onMenuClick, sidebarOpen, onRemoveFile }) {
+function ChatHeader({ title, file, onMenuClick, sidebarOpen}) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -99,18 +99,18 @@ function ChatHeader({ title, file, onMenuClick, sidebarOpen, onRemoveFile }) {
           <Chip
             icon={getFileIcon(file.type)}
             label={file.name}
-            onDelete={onRemoveFile}
-            deleteIcon={
-              <CloseIcon
-                sx={{
-                  color: "white !important",
-                  fontSize: '0.9rem',
-                  "&:hover": {
-                    color: `${theme.palette.background.default} !important`,
-                  },
-                }}
-              />
-            }
+            // onDelete={onRemoveFile}
+            // deleteIcon={
+            //   <CloseIcon
+            //     sx={{
+            //       color: "white !important",
+            //       fontSize: '0.9rem',
+            //       "&:hover": {
+            //         color: `${theme.palette.background.default} !important`,
+            //       },
+            //     }}
+            //   />
+            // }
             sx={{
               bgcolor: chipBackground,
               color: "white",

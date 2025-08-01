@@ -9,6 +9,7 @@ import {
   Paper,
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
+import StopIcon from "@mui/icons-material/Stop";
 import SmartSuggestions from "./SmartSuggestions";
 
 function InputArea({
@@ -17,6 +18,7 @@ function InputArea({
   onSend,
   fullText,
   loading,
+  onStopGeneration, // New prop for stopping generation
 }) {
   const textFieldRef = useRef(null);
   const inputElementRef = useRef(null);
@@ -26,6 +28,8 @@ function InputArea({
   // Safe color access with fallbacks
   const primaryColor = theme.palette.primary.main || "#7247EE";
   const primaryDarkColor = theme.palette.primary.dark || "#5A3AA6";
+  const errorColor = theme.palette.error.main || "#ef4444";
+  const errorDarkColor = theme.palette.error.dark || "#dc2626";
   const borderColor = theme.palette.divider || "#E0E0E0";
   const hoverBorderColor = theme.palette.action.hoverBorder || "#BDBDBD";
   const disabledBgColor = theme.palette.action.disabledBackground || "#E0E0E0";
@@ -109,13 +113,14 @@ function InputArea({
         >
           <TextField
             fullWidth
-            placeholder="Ask a question..."
+            placeholder={fullText ? "Ask a question..." : "Please upload a document first"}
             value={userInput}
             onChange={(e) => onInputChange(e.target.value)}
             multiline
             minRows={1}
             maxRows={isMobile ? 3 : 5}
             inputRef={inputElementRef}
+            disabled={!fullText}
             sx={{
               "& .MuiOutlinedInput-root": {
                 border: "none",
@@ -145,45 +150,78 @@ function InputArea({
             }}
           />
 
-          <Tooltip title="Send" enterDelay={500}>
-            <IconButton
-              onClick={onSend}
-              disabled={loading || !userInput.trim()}
-              sx={{
-                flexShrink: 0,
-                backgroundColor: primaryColor,
-                color: theme.palette.common.white,
-                width: { xs: 32, sm: 34 },
-                height: { xs: 32, sm: 34 },
-                "&:hover": {
-                  backgroundColor: primaryDarkColor,
-                },
-                "&:disabled": {
-                  backgroundColor: disabledBgColor,
-                  color: disabledColor,
-                },
-                borderRadius: "50%",
-                transition: theme.transitions.create(['background-color'], {
-                  duration: theme.transitions.duration.short,
-                }),
-                ml: { xs: 0.8, sm: 1 },
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: theme.shadows[1],
-              }}
-            >
-              <SendIcon sx={{ fontSize: { xs: 'small', sm: 'small' } }} />
-            </IconButton>
-          </Tooltip>
+          {loading ? (
+            <Tooltip title="Stop generation" enterDelay={500}>
+              <IconButton
+                onClick={onStopGeneration}
+                sx={{
+                  flexShrink: 0,
+                  backgroundColor: errorColor,
+                  color: theme.palette.common.white,
+                  width: { xs: 32, sm: 34 },
+                  height: { xs: 32, sm: 34 },
+                  "&:hover": {
+                    backgroundColor: errorDarkColor,
+                  },
+                  borderRadius: "50%",
+                  transition: theme.transitions.create(['background-color'], {
+                    duration: theme.transitions.duration.short,
+                  }),
+                  ml: { xs: 0.8, sm: 1 },
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: theme.shadows[1],
+                }}
+              >
+                <StopIcon sx={{ fontSize: { xs: 'small', sm: 'small' } }} />
+              </IconButton>
+            </Tooltip>
+          ) : (
+            <Tooltip title={fullText ? "Send message" : "Upload a document first"} enterDelay={500}>
+              <span>
+                <IconButton
+                  onClick={onSend}
+                  disabled={!fullText || !userInput.trim()}
+                  sx={{
+                    flexShrink: 0,
+                    backgroundColor: primaryColor,
+                    color: theme.palette.common.white,
+                    width: { xs: 32, sm: 34 },
+                    height: { xs: 32, sm: 34 },
+                    "&:hover": {
+                      backgroundColor: primaryDarkColor,
+                    },
+                    "&:disabled": {
+                      backgroundColor: disabledBgColor,
+                      color: disabledColor,
+                    },
+                    borderRadius: "50%",
+                    transition: theme.transitions.create(['background-color'], {
+                      duration: theme.transitions.duration.short,
+                    }),
+                    ml: { xs: 0.8, sm: 1 },
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: theme.shadows[1],
+                  }}
+                >
+                  <SendIcon sx={{ fontSize: { xs: 'small', sm: 'small' } }} />
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
         </Paper>
 
-        <SmartSuggestions
-          userInput={userInput}
-          fullText={fullText}
-          onInputChange={onInputChange}
-          anchorEl={inputElementRef.current}
-        />
+        {fullText && (
+          <SmartSuggestions
+            userInput={userInput}
+            fullText={fullText}
+            onInputChange={onInputChange}
+            anchorEl={inputElementRef.current}
+          />
+        )}
       </Box>
     </Box>
   );

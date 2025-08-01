@@ -3,9 +3,12 @@ import React from "react";
 import { Box } from "@mui/material";
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ChatContainer from "./features/ChatContainer";
+// import { ThemeProvider, CssBaseline  } from '@mui/material';
+import { theme } from './theme';
 
 function App() {
   return (
+    // <ThemeProvider theme={theme}>
     <Box sx={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden" }}>
       <Routes>
         {/* Default route redirects to new chat */}
@@ -19,6 +22,7 @@ function App() {
         <Route path="*" element={<Navigate to="/chat/new" replace />} />
       </Routes>
     </Box>
+    // </ThemeProvider>
   );
 }
 

@@ -1,5 +1,5 @@
-// Fixed ChatContainer.jsx with separate loading states per chat
-import React, { useState, useCallback, useEffect } from "react";
+// Enhanced ChatContainer.jsx with edit message and stop generation features
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   Box,
   useTheme,
@@ -39,6 +39,9 @@ function ChatContainer() {
   const [fileUploadLoading, setFileUploadLoading] = useState(false); // Separate loading for file uploads
   const [userInput, setUserInput] = useState("");
   const [dragOver, setDragOver] = useState(false);
+  
+  // Reference to abort controller for stopping API requests
+  const abortControllerRef = useRef(null);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -79,11 +82,23 @@ function ChatContainer() {
     }));
   }, []);
 
+  // Function to stop generation
+  const stopGeneration = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    if (chatId) {
+      setLoadingForChat(chatId, false);
+    }
+  }, [chatId, setLoadingForChat]);
+
   // Function to call DeepSeek R1 through OpenRouter
   const sendMessageToDeepSeek = async (
     message,
     documentText,
-    chatHistory = []
+    chatHistory = [],
+    abortSignal
   ) => {
     try {
       const messages = [
@@ -122,6 +137,7 @@ Please answer the question based on the document content. If the answer is not i
             max_tokens: 2000,
             temperature: 0.7,
           }),
+          signal: abortSignal, // Add abort signal
         }
       );
 
@@ -147,6 +163,10 @@ Please answer the question based on the document content. If the answer is not i
         usage: data.usage,
       };
     } catch (error) {
+      if (error.name === 'AbortError') {
+        console.log("Request was aborted");
+        throw new Error("Request was stopped by user");
+      }
       console.error("DeepSeek API call failed:", error);
       throw error;
     }
@@ -200,6 +220,15 @@ Please answer the question based on the document content. If the answer is not i
   const handleFileInputChange = useCallback(
     async (event) => {
       const file = event.target.files[0];
+      if (!file) return;
+      
+      // Check if file is an image
+      if (file.type.startsWith("image/")) {
+        alert("Image uploads are not supported. Please upload a PDF, DOC, DOCX, or TXT file.");
+        event.target.value = null;
+        return;
+      }
+      
       if (file) await handleFileUpload(file);
       event.target.value = null;
     },
@@ -220,25 +249,51 @@ Please answer the question based on the document content. If the answer is not i
     async (e) => {
       e.preventDefault();
       setDragOver(false);
-
+  
       const files = Array.from(e.dataTransfer.files);
       if (files.length > 0) {
         const file = files[0];
-        const allowedTypes = [".pdf", ".doc", ".docx", ".txt", "image/"];
+        const allowedTypes = [".pdf", ".doc", ".docx", ".txt"]; // Removed image/*
+        
+        // Check if file is an image
+        if (file.type.startsWith("image/")) {
+          alert("Image uploads are not supported. Please upload a PDF, DOC, DOCX, or TXT file.");
+          return;
+        }
+  
         const fileExtension = "." + file.name.split(".").pop().toLowerCase();
-
-        if (
-          allowedTypes.includes(fileExtension) ||
-          file.type.startsWith("image/")
-        ) {
+        if (allowedTypes.includes(fileExtension)) {
           await handleFileUpload(file);
         } else {
-          alert("Please upload a PDF, DOC, DOCX, TXT file, or an image.");
+          alert("Please upload a PDF, DOC, DOCX, or TXT file.");
         }
       }
     },
     [handleFileUpload]
   );
+
+  // Function to handle editing a message
+  const handleEditMessage = useCallback((messageIndex, messageText) => {
+    if (!currentChat || !chatId) return;
+
+    // Set the message text in the input
+    setUserInput(messageText);
+
+    // Remove all messages from the selected index onwards
+    setChats((prevChats) =>
+      prevChats.map((chat) =>
+        chat.id === chatId
+          ? {
+              ...chat,
+              messages: chat.messages.slice(0, messageIndex),
+            }
+          : chat
+      )
+    );
+
+    // Focus on the input area (you might need to pass a ref to InputArea for this)
+    // This will be handled by the InputArea component
+  }, [currentChat, chatId, setUserInput, setChats]);
 
   const onSendMessage = useCallback(async () => {
     if (!userInput.trim() || currentChatLoading || !currentChat || !chatId) return;
@@ -250,6 +305,9 @@ Please answer the question based on the document content. If the answer is not i
       );
       return;
     }
+
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
 
     setLoadingForChat(chatId, true); // Set loading for specific chat
     const messageToSend = userInput;
@@ -275,7 +333,8 @@ Please answer the question based on the document content. If the answer is not i
       const response = await sendMessageToDeepSeek(
         messageToSend,
         currentChat.fullText,
-        currentChat.messages
+        currentChat.messages,
+        abortControllerRef.current.signal
       );
 
       // Add AI response to chat
@@ -294,6 +353,11 @@ Please answer the question based on the document content. If the answer is not i
       );
     } catch (error) {
       console.error("Error sending message:", error);
+
+      // Don't show error message if request was aborted by user
+      if (error.message === "Request was stopped by user") {
+        return;
+      }
 
       // Show appropriate error message based on error type
       let errorMessage =
@@ -334,6 +398,7 @@ Please answer the question based on the document content. If the answer is not i
       );
     } finally {
       setLoadingForChat(chatId, false); // Clear loading for specific chat
+      abortControllerRef.current = null; // Clear abort controller
     }
   }, [
     userInput,
@@ -488,6 +553,8 @@ Please answer the question based on the document content. If the answer is not i
             loading={currentChatLoading} // Use current chat's loading state
             setLoading={(loading) => setLoadingForChat(chatId, loading)} // Set loading for current chat
             onSendMessage={onSendMessage}
+            onStopGeneration={stopGeneration} // Pass stop function
+            onEditMessage={handleEditMessage} // Pass edit message function
           />
         )}
       </Box>
@@ -631,11 +698,11 @@ function NewChatView({
               fontSize: { xs: "0.75rem", sm: "0.875rem" },
             }}
           >
-            Click or Drag & Drop to upload .pdf, File size up to 15MB
+             Click or Drag & Drop to upload PDF, DOC, DOCX, or TXT files (up to 15MB)
           </Typography>
 
           <input
-            accept=".pdf,.doc,.docx,.txt,image/*"
+            accept=".pdf,.doc,.docx,.txt"
             style={{ display: "none" }}
             id="file-upload-button"
             type="file"
@@ -684,6 +751,8 @@ function ChatView({
   loading,
   setLoading,
   onSendMessage,
+  onStopGeneration, // New prop
+  onEditMessage, // New prop
 }) {
   const { chatId } = useParams();
   const navigate = useNavigate();
@@ -729,13 +798,18 @@ function ChatView({
         isMobile={isMobile}
         onRemoveFile={onRemoveFile}
       />
-      <MessageList messages={currentChat.messages} loading={loading} />
+      <MessageList 
+        messages={currentChat.messages} 
+        loading={loading} 
+        onEditMessage={onEditMessage} // Pass edit function to MessageList
+      />
       <InputArea
         userInput={userInput}
         onInputChange={setUserInput}
         onSend={onSendMessage}
         loading={loading}
         fullText={currentChat.fullText}
+        onStopGeneration={onStopGeneration} // Pass stop function to InputArea
       />
     </>
   );
