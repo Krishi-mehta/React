@@ -1,5 +1,5 @@
-// Enhanced ChatContainer.jsx with edit message and stop generation features
-import React, { useState, useCallback, useEffect, useRef } from "react";
+// Enhanced ChatContainer.jsx with Firebase Authentication and Redux integration
+import React, { useCallback, useEffect, useRef } from "react";
 import {
   Box,
   useTheme,
@@ -20,6 +20,37 @@ import LoadingMessage from "../components/LoadingMessage";
 import Sidebar from "../components/Sidebar";
 
 import { extractTextFromFile } from "../utils/fileProcessing";
+import { useAuth } from "../contexts/AuthContext";
+
+// Redux imports
+import {
+  useAppDispatch,
+  useChats,
+  useFileUploadLoading,
+  useUserInput,
+  useSidebarOpen,
+  useDragOver,
+  useChat,
+  useChatLoading,
+  useChatAbortController,
+} from "../reducers/hooks";
+import {
+  addChat,
+  updateChatTitle,
+  deleteChat,
+  addMessage,
+  editMessage,
+  setFileUploadLoading,
+  setUserInput,
+  setSidebarOpen,
+  setDragOver,
+  updateChatFile,
+  removeChatFile,
+  setAbortController,
+  clearAbortController,
+  sendMessageToAI,
+} from "../store/slices/chatSlice";
+import { initializeChatsFromStorage } from "../reducers/middleware/persistenceMiddleware";
 
 const ACCENT_COLOR = "#64B5F6";
 const ACCENT_COLOR_HOVER = "#42A5F5";
@@ -34,150 +65,41 @@ const OPENROUTER_CONFIG = {
 };
 
 function ChatContainer() {
-  const [chats, setChats] = useState([]);
-  const [loadingStates, setLoadingStates] = useState({}); // Separate loading states per chat
-  const [fileUploadLoading, setFileUploadLoading] = useState(false); // Separate loading for file uploads
-  const [userInput, setUserInput] = useState("");
-  const [dragOver, setDragOver] = useState(false);
-
-  // Reference to abort controller for stopping API requests
-  const abortControllerRef = useRef(null);
+  const { currentUser } = useAuth();
+  const dispatch = useAppDispatch();
+  
+  // Redux state
+  const chats = useChats();
+  const fileUploadLoading = useFileUploadLoading();
+  const userInput = useUserInput();
+  const sidebarOpen = useSidebarOpen();
+  const dragOver = useDragOver();
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const navigate = useNavigate();
   const { chatId } = useParams();
 
   const isNewChatPath = chatId === "new";
-  const currentChat = chatId ? chats.find((chat) => chat.id === chatId) : null;
+  const currentChat = useChat(chatId);
+  const currentChatLoading = useChatLoading(chatId);
+  const currentAbortController = useChatAbortController(chatId);
 
-  // Get loading state for current chat
-  const currentChatLoading = chatId ? loadingStates[chatId] || false : false;
-
-  // Load chats from localStorage on initial render
+  // Load chats from localStorage on initial render (user-specific)
   useEffect(() => {
-    try {
-      const storedChats = localStorage.getItem("pdfChatApp_chats");
-      if (storedChats) {
-        setChats(JSON.parse(storedChats));
-      }
-    } catch (error) {
-      console.error("Failed to load chats from localStorage:", error);
-      localStorage.removeItem("pdfChatApp_chats");
+    if (currentUser) {
+      dispatch(initializeChatsFromStorage(currentUser.uid));
     }
-  }, []);
-
-  // Save chats to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem("pdfChatApp_chats", JSON.stringify(chats));
-  }, [chats]);
-
-  // Helper functions to manage loading states per chat
-  const setLoadingForChat = useCallback((chatId, loading) => {
-    setLoadingStates((prev) => ({
-      ...prev,
-      [chatId]: loading,
-    }));
-  }, []);
+  }, [dispatch, currentUser]);
 
   // Function to stop generation
   const stopGeneration = useCallback(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
+    if (currentAbortController) {
+      currentAbortController.abort();
+      dispatch(clearAbortController(chatId));
     }
-    if (chatId) {
-      setLoadingForChat(chatId, false);
-    }
-  }, [chatId, setLoadingForChat]);
-
-  // Function to call DeepSeek R1 through OpenRouter
-  const sendMessageToDeepSeek = async (
-    message,
-    documentText,
-    chatHistory = [],
-    abortSignal
-  ) => {
-    try {
-      const messages = [
-        {
-          role: "user",
-          content: `You are a helpful AI assistant that answers questions based on the provided document. Here is the document content:
-
-                  ${documentText}
-
-Previous conversation:
-${chatHistory
-  .map((msg) => `${msg.sender === "user" ? "User" : "Assistant"}: ${msg.text}`)
-  .join("\n")}
-
-Current question: ${message}
-
-Please answer the question based on the document content. If the answer is not in the document, say so clearly. Provide detailed and helpful responses.`,
-        },
-      ];
-
-      console.log("Sending request to OpenRouter...");
-
-      console.log(" OpenRouter API Key in Vercel:", OPENROUTER_CONFIG.apiKey);
-      console.log(
-        " Full API URL:",
-        `${OPENROUTER_CONFIG.baseUrl}/chat/completions`
-      );
-      console.log(" Using Model:", OPENROUTER_CONFIG.model);
-
-      const response = await fetch(
-        `${OPENROUTER_CONFIG.baseUrl}/chat/completions`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${OPENROUTER_CONFIG.apiKey}`,
-            "HTTP-Referer": OPENROUTER_CONFIG.siteUrl,
-            "X-Title": OPENROUTER_CONFIG.siteName,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: OPENROUTER_CONFIG.model,
-            messages: messages,
-            max_tokens: 2000,
-            temperature: 0.7,
-          }),
-          signal: abortSignal, // Add abort signal
-        }
-      );
-
-      console.log("Response status:", response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("API Error Response:", errorText);
-        throw new Error(
-          `OpenRouter API Error: ${response.status} - ${errorText}`
-        );
-      }
-
-      const data = await response.json();
-      console.log("API Response:", data);
-
-      if (!data.choices || data.choices.length === 0) {
-        throw new Error("No response from DeepSeek R1 model");
-      }
-
-      return {
-        text: data.choices[0].message.content,
-        usage: data.usage,
-      };
-    } catch (error) {
-      if (error.name === "AbortError") {
-        console.log("Request was aborted");
-        throw new Error("Request was stopped by user");
-      }
-      console.error("DeepSeek API call failed:", error);
-      throw error;
-    }
-  };
+  }, [currentAbortController, chatId, dispatch]);
 
   const handleFileUpload = useCallback(
     async (file) => {
@@ -189,8 +111,8 @@ Please answer the question based on the document content. If the answer is not i
         return;
       }
 
-      setFileUploadLoading(true); // Use separate file upload loading
-      setUserInput("");
+      dispatch(setFileUploadLoading(true));
+      dispatch(setUserInput(""));
 
       try {
         const fullText = await extractTextFromFile(file);
@@ -210,18 +132,19 @@ Please answer the question based on the document content. If the answer is not i
           },
           fullText: fullText,
           messages: [],
+          userId: currentUser?.uid, // Add user ID to chat
         };
 
-        setChats((prevChats) => [...prevChats, newChat]);
+        dispatch(addChat(newChat));
         navigate(`/chat/${newChatId}`);
       } catch (error) {
         console.error("Error processing file:", error);
         alert("Failed to process file: " + error.message);
       } finally {
-        setFileUploadLoading(false);
+        dispatch(setFileUploadLoading(false));
       }
     },
-    [navigate, setChats, setUserInput]
+    [dispatch, navigate, currentUser]
   );
 
   const handleFileInputChange = useCallback(
@@ -246,23 +169,23 @@ Please answer the question based on the document content. If the answer is not i
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
-    setDragOver(true);
-  }, []);
+    dispatch(setDragOver(true));
+  }, [dispatch]);
 
   const handleDragLeave = useCallback((e) => {
     e.preventDefault();
-    setDragOver(false);
-  }, []);
+    dispatch(setDragOver(false));
+  }, [dispatch]);
 
   const handleDrop = useCallback(
     async (e) => {
       e.preventDefault();
-      setDragOver(false);
+      dispatch(setDragOver(false));
 
       const files = Array.from(e.dataTransfer.files);
       if (files.length > 0) {
         const file = files[0];
-        const allowedTypes = [".pdf", ".doc", ".docx", ".txt"]; // Removed image/*
+        const allowedTypes = [".pdf", ".doc", ".docx", ".txt"];
 
         // Check if file is an image
         if (file.type.startsWith("image/")) {
@@ -280,7 +203,7 @@ Please answer the question based on the document content. If the answer is not i
         }
       }
     },
-    [handleFileUpload]
+    [handleFileUpload, dispatch]
   );
 
   // Function to handle editing a message
@@ -289,24 +212,12 @@ Please answer the question based on the document content. If the answer is not i
       if (!currentChat || !chatId) return;
 
       // Set the message text in the input
-      setUserInput(messageText);
+      dispatch(setUserInput(messageText));
 
       // Remove all messages from the selected index onwards
-      setChats((prevChats) =>
-        prevChats.map((chat) =>
-          chat.id === chatId
-            ? {
-                ...chat,
-                messages: chat.messages.slice(0, messageIndex),
-              }
-            : chat
-        )
-      );
-
-      // Focus on the input area (you might need to pass a ref to InputArea for this)
-      // This will be handled by the InputArea component
+      dispatch(editMessage({ chatId, messageIndex }));
     },
-    [currentChat, chatId, setUserInput, setChats]
+    [currentChat, chatId, dispatch]
   );
 
   const onSendMessage = useCallback(async () => {
@@ -322,171 +233,73 @@ Please answer the question based on the document content. If the answer is not i
     }
 
     // Create new abort controller
-    abortControllerRef.current = new AbortController();
+    const abortController = new AbortController();
+    dispatch(setAbortController({ chatId, abortController }));
 
-    setLoadingForChat(chatId, true); // Set loading for specific chat
     const messageToSend = userInput;
-    setUserInput("");
+    dispatch(setUserInput(""));
 
     // Add user message to chat
-    setChats((prevChats) =>
-      prevChats.map((chat) =>
-        chat.id === chatId
-          ? {
-              ...chat,
-              messages: [
-                ...chat.messages,
-                { sender: "user", text: messageToSend },
-              ],
-            }
-          : chat
-      )
-    );
+    dispatch(addMessage({ 
+      chatId, 
+      message: { sender: "user", text: messageToSend } 
+    }));
 
     try {
-      // Call DeepSeek R1 through OpenRouter
-      const response = await sendMessageToDeepSeek(
-        messageToSend,
-        currentChat.fullText,
-        currentChat.messages,
-        abortControllerRef.current.signal
-      );
-
-      // Add AI response to chat
-      setChats((prevChats) =>
-        prevChats.map((chat) =>
-          chat.id === chatId
-            ? {
-                ...chat,
-                messages: [
-                  ...chat.messages,
-                  { sender: "ai", text: response.text },
-                ],
-              }
-            : chat
-        )
-      );
+      // Dispatch the async thunk
+      await dispatch(sendMessageToAI({
+        message: messageToSend,
+        chatId,
+        documentText: currentChat.fullText,
+        chatHistory: currentChat.messages,
+        apiConfig: OPENROUTER_CONFIG,
+      }));
     } catch (error) {
       console.error("Error sending message:", error);
-
-      // Don't show error message if request was aborted by user
-      if (error.message === "Request was stopped by user") {
-        return;
-      }
-
-      // Show appropriate error message based on error type
-      let errorMessage =
-        "I apologize, but I encountered an error while processing your request.";
-
-      if (
-        error.message.includes("Failed to fetch") ||
-        error.message.includes("NetworkError")
-      ) {
-        errorMessage =
-          "Unable to connect to the AI service. Please check your internet connection and try again.";
-      } else if (error.message.includes("401")) {
-        errorMessage =
-          "Invalid API key. Please check your OpenRouter API key in the .env file.";
-      } else if (error.message.includes("429")) {
-        errorMessage =
-          "Rate limit exceeded. Please wait a moment before sending another message.";
-      } else if (error.message.includes("402")) {
-        errorMessage = "Insufficient credits in your OpenRouter account.";
-      } else if (error.message.includes("400")) {
-        errorMessage = "Bad request. Please try rephrasing your question.";
-      } else if (error.message.includes("OpenRouter API Error")) {
-        errorMessage = `API Error: ${error.message}`;
-      }
-
-      setChats((prevChats) =>
-        prevChats.map((chat) =>
-          chat.id === chatId
-            ? {
-                ...chat,
-                messages: [
-                  ...chat.messages,
-                  { sender: "ai", text: errorMessage },
-                ],
-              }
-            : chat
-        )
-      );
-    } finally {
-      setLoadingForChat(chatId, false); // Clear loading for specific chat
-      abortControllerRef.current = null; // Clear abort controller
     }
   }, [
     userInput,
     currentChatLoading,
     chatId,
     currentChat,
-    setChats,
-    setUserInput,
-    setLoadingForChat,
+    dispatch,
   ]);
 
   const handleNewChat = useCallback(() => {
     navigate("/chat/new");
-    setUserInput("");
-    if (isMobile) setSidebarOpen(false);
-  }, [navigate, isMobile]);
+    dispatch(setUserInput(""));
+    if (isMobile) dispatch(setSidebarOpen(false));
+  }, [navigate, isMobile, dispatch]);
 
   const handleChatSelect = useCallback(
     (id) => {
       navigate(`/chat/${id}`);
-      setUserInput("");
-      if (isMobile) setSidebarOpen(false);
+      dispatch(setUserInput(""));
+      if (isMobile) dispatch(setSidebarOpen(false));
     },
-    [navigate, isMobile]
+    [navigate, isMobile, dispatch]
   );
 
   const handleEditChatTitle = useCallback((id, newTitle) => {
-    setChats((prevChats) =>
-      prevChats.map((chat) =>
-        chat.id === id ? { ...chat, title: newTitle } : chat
-      )
-    );
-  }, []);
+    dispatch(updateChatTitle({ chatId: id, title: newTitle }));
+  }, [dispatch]);
 
   const handleDeleteChat = useCallback(
     (idToDelete) => {
-      setChats((prevChats) => {
-        const updatedChats = prevChats.filter((chat) => chat.id !== idToDelete);
-        if (chatId === idToDelete) {
-          navigate("/chat/new");
-        }
-        return updatedChats;
-      });
-
-      // Clean up loading state for deleted chat
-      setLoadingStates((prev) => {
-        const { [idToDelete]: _, ...rest } = prev;
-        return rest;
-      });
+      dispatch(deleteChat(idToDelete));
+      if (chatId === idToDelete) {
+        navigate("/chat/new");
+      }
     },
-    [navigate, chatId]
+    [navigate, chatId, dispatch]
   );
 
   const handleRemoveFile = useCallback(() => {
     if (currentChat) {
-      const updatedChats = chats.map((chat) => {
-        if (chat.id === chatId) {
-          return {
-            ...chat,
-            file: null,
-            fullText: "",
-            messages: [],
-          };
-        }
-        return chat;
-      });
-      setChats(updatedChats);
-
-      // Clear loading state for this chat
-      setLoadingForChat(chatId, false);
+      dispatch(removeChatFile(chatId));
       navigate("/chat/new");
     }
-  }, [chats, navigate, currentChat, chatId, setLoadingForChat]);
+  }, [currentChat, chatId, dispatch, navigate]);
 
   const sidebarWidth = 280;
 
@@ -501,7 +314,7 @@ Please answer the question based on the document content. If the answer is not i
     >
       <Sidebar
         open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
+        onClose={() => dispatch(setSidebarOpen(false))}
         chats={chats}
         activeChat={chatId}
         onNewChat={handleNewChat}
@@ -538,13 +351,13 @@ Please answer the question based on the document content. If the answer is not i
           <NewChatView
             chats={chats}
             sidebarOpen={sidebarOpen}
-            setSidebarOpen={setSidebarOpen}
+            setSidebarOpen={(open) => dispatch(setSidebarOpen(open))}
             isMobile={isMobile}
             onNewChat={handleNewChat}
             onChatSelect={handleChatSelect}
             onEditChatTitle={handleEditChatTitle}
             onDeleteChat={handleDeleteChat}
-            loading={fileUploadLoading} // Use file upload loading
+            loading={fileUploadLoading}
             dragOver={dragOver}
             handleDragOver={handleDragOver}
             handleDragLeave={handleDragLeave}
@@ -554,9 +367,8 @@ Please answer the question based on the document content. If the answer is not i
         ) : (
           <ChatView
             chats={chats}
-            setChats={setChats}
             sidebarOpen={sidebarOpen}
-            setSidebarOpen={setSidebarOpen}
+            setSidebarOpen={(open) => dispatch(setSidebarOpen(open))}
             isMobile={isMobile}
             onNewChat={handleNewChat}
             onChatSelect={handleChatSelect}
@@ -564,12 +376,11 @@ Please answer the question based on the document content. If the answer is not i
             onDeleteChat={handleDeleteChat}
             onRemoveFile={handleRemoveFile}
             userInput={userInput}
-            setUserInput={setUserInput}
-            loading={currentChatLoading} // Use current chat's loading state
-            setLoading={(loading) => setLoadingForChat(chatId, loading)} // Set loading for current chat
+            setUserInput={(input) => dispatch(setUserInput(input))}
+            loading={currentChatLoading}
             onSendMessage={onSendMessage}
-            onStopGeneration={stopGeneration} // Pass stop function
-            onEditMessage={handleEditMessage} // Pass edit message function
+            onStopGeneration={stopGeneration}
+            onEditMessage={handleEditMessage}
           />
         )}
       </Box>
@@ -753,7 +564,6 @@ function NewChatView({
 // ChatView Component
 function ChatView({
   chats,
-  setChats,
   sidebarOpen,
   setSidebarOpen,
   isMobile,
@@ -765,15 +575,13 @@ function ChatView({
   userInput,
   setUserInput,
   loading,
-  setLoading,
   onSendMessage,
-  onStopGeneration, // New prop
-  onEditMessage, // New prop
+  onStopGeneration,
+  onEditMessage,
 }) {
   const { chatId } = useParams();
   const navigate = useNavigate();
-
-  const currentChat = chatId ? chats.find((chat) => chat.id === chatId) : null;
+  const currentChat = useChat(chatId);
 
   useEffect(() => {
     if (!currentChat && chatId !== "new") {
@@ -809,7 +617,7 @@ function ChatView({
       <ChatHeader
         title={currentChat.title}
         file={currentChat.file}
-        onMenuClick={() => setSidebarOpen((prev) => !prev)}
+        onMenuClick={() => setSidebarOpen(!sidebarOpen)}
         sidebarOpen={sidebarOpen}
         isMobile={isMobile}
         onRemoveFile={onRemoveFile}
@@ -817,7 +625,7 @@ function ChatView({
       <MessageList
         messages={currentChat.messages}
         loading={loading}
-        onEditMessage={onEditMessage} // Pass edit function to MessageList
+        onEditMessage={onEditMessage}
       />
       <InputArea
         userInput={userInput}
@@ -825,10 +633,10 @@ function ChatView({
         onSend={onSendMessage}
         loading={loading}
         fullText={currentChat.fullText}
-        onStopGeneration={onStopGeneration} // Pass stop function to InputArea
+        onStopGeneration={onStopGeneration}
       />
     </>
   );
 }
 
-export default ChatContainer;
+export default ChatContainer; 

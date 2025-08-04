@@ -1,20 +1,23 @@
-// src/main.jsx (or src/index.js)
+// src/main.jsx
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import { ThemeProvider, CssBaseline } from '@mui/material';
-import App from './App' // Keep this import path as is
-// import theme from './theme';
-import { BrowserRouter } from 'react-router-dom'; // IMPORT BrowserRouter
+import { Provider } from 'react-redux';
+// import { store } from './store';
+import App from './App'
+import { BrowserRouter } from 'react-router-dom';
+import { store } from './store/store';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    {/* <ThemeProvider theme={theme}> */}
+    <Provider store={store}>
       <CssBaseline />
-      {/* WRAP App COMPONENT WITH BrowserRouter */}
       <BrowserRouter>
         <App />
       </BrowserRouter>
-    {/* </ThemeProvider> */}
+    </Provider>
   </StrictMode>,
 )
+
+

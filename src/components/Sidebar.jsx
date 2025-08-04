@@ -10,11 +10,17 @@ import {
   IconButton,
   TextField,
   useTheme,
+  Avatar,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import LogoutIcon from '@mui/icons-material/Logout';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { useAuth } from '../contexts/AuthContext';
 
 function Sidebar({
   open,
@@ -29,9 +35,11 @@ function Sidebar({
   isStatic = false
 }) {
   const theme = useTheme();
+  const { currentUser, logout } = useAuth();
   const [editingChatId, setEditingChatId] = useState(null);
   const [editedTitle, setEditedTitle] = useState("");
   const [hoveredChatId, setHoveredChatId] = useState(null);
+  const [userMenuAnchor, setUserMenuAnchor] = useState(null);
 
   // Exact color definitions matching current appearance
   const colors = {
@@ -62,6 +70,23 @@ function Sidebar({
   const handleCancelEdit = () => {
     setEditingChatId(null);
     setEditedTitle("");
+  };
+
+  const handleUserMenuOpen = (event) => {
+    setUserMenuAnchor(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setUserMenuAnchor(null);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      handleUserMenuClose();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   return (
@@ -307,6 +332,101 @@ function Sidebar({
             </List>
           </>
         )}
+      </Box>
+
+      {/* User Profile Section */}
+      <Box sx={{ p: 2, borderTop: `1px solid ${colors.divider}` }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            p: 1,
+            borderRadius: '8px',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s',
+            '&:hover': {
+              backgroundColor: colors.hoverBg,
+            },
+          }}
+          onClick={handleUserMenuOpen}
+        >
+          <Avatar
+            src={currentUser?.photoURL}
+            alt={currentUser?.displayName}
+            sx={{
+              width: 32,
+              height: 32,
+              bgcolor: colors.primary,
+              fontSize: '14px',
+            }}
+          >
+            {currentUser?.displayName?.charAt(0) || 'U'}
+          </Avatar>
+          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+            <Typography
+              sx={{
+                color: colors.sidebarText,
+                fontSize: '14px',
+                fontWeight: 500,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {currentUser?.displayName || 'User'}
+            </Typography>
+            <Typography
+              sx={{
+                color: colors.secondaryText,
+                fontSize: '12px',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {currentUser?.email}
+            </Typography>
+          </Box>
+          <IconButton
+            size="small"
+            sx={{
+              color: colors.secondaryText,
+              '&:hover': {
+                color: colors.sidebarText,
+              }
+            }}
+          >
+            <MoreVertIcon fontSize="small" />
+          </IconButton>
+        </Box>
+
+        <Menu
+          anchorEl={userMenuAnchor}
+          open={Boolean(userMenuAnchor)}
+          onClose={handleUserMenuClose}
+          PaperProps={{
+            sx: {
+              bgcolor: colors.sidebarBg,
+              color: colors.sidebarText,
+              border: `1px solid ${colors.divider}`,
+              minWidth: 160,
+            },
+          }}
+        >
+          <MenuItem 
+            onClick={handleLogout}
+            sx={{
+              gap: 1.5,
+              '&:hover': {
+                bgcolor: colors.hoverBg,
+              }
+            }}
+          >
+            <LogoutIcon fontSize="small" />
+            <Typography fontSize="14px">Sign out</Typography>
+          </MenuItem>
+        </Menu>
       </Box>
     </Drawer>
   );

@@ -1,3 +1,4 @@
+// components/InputArea.jsx - Updated with Redux integration
 import React, { useRef, useEffect } from "react";
 import {
   Box,
@@ -12,14 +13,19 @@ import SendIcon from "@mui/icons-material/Send";
 import StopIcon from "@mui/icons-material/Stop";
 import SmartSuggestions from "./SmartSuggestions";
 
+// Redux imports
+import { useAppDispatch, useUserInput } from "../reducers/hooks";
+import { setUserInput } from "../store/slices/chatSlice";
+
 function InputArea({
-  userInput,
-  onInputChange,
   onSend,
   fullText,
   loading,
-  onStopGeneration, // New prop for stopping generation
+  onStopGeneration,
 }) {
+  const dispatch = useAppDispatch();
+  const userInput = useUserInput(); // Get from Redux state
+  
   const textFieldRef = useRef(null);
   const inputElementRef = useRef(null);
   const theme = useTheme();
@@ -35,6 +41,11 @@ function InputArea({
   const disabledBgColor = theme.palette.action.disabledBackground || "#E0E0E0";
   const disabledColor = theme.palette.action.disabled || "#BDBDBD";
   const textColor = theme.palette.text.primary || "#343541";
+
+  // Handle input change
+  const handleInputChange = (value) => {
+    dispatch(setUserInput(value));
+  };
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -115,7 +126,7 @@ function InputArea({
             fullWidth
             placeholder={fullText ? "Ask a question..." : "Please upload a document first"}
             value={userInput}
-            onChange={(e) => onInputChange(e.target.value)}
+            onChange={(e) => handleInputChange(e.target.value)}
             multiline
             minRows={1}
             maxRows={isMobile ? 3 : 5}
@@ -218,7 +229,7 @@ function InputArea({
           <SmartSuggestions
             userInput={userInput}
             fullText={fullText}
-            onInputChange={onInputChange}
+            onInputChange={handleInputChange}
             anchorEl={inputElementRef.current}
           />
         )}
