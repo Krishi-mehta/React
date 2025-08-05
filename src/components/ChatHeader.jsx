@@ -7,12 +7,15 @@ import {
   useTheme,
   Tooltip,
   Chip,
+  CircularProgress,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import ImageIcon from "@mui/icons-material/Image";
+import ErrorIcon from "@mui/icons-material/Error";
 // import CloseIcon from "@mui/icons-material/Close";
 
-function ChatHeader({ title, file, onMenuClick, sidebarOpen}) {
+function ChatHeader({ title, file, onMenuClick, sidebarOpen, processingComplete = true, processingError = false}) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -21,7 +24,20 @@ function ChatHeader({ title, file, onMenuClick, sidebarOpen}) {
   const chipHoverBackground = theme.palette.custom?.chipHoverBackground || "#5A5FE0";
 
   const getFileIcon = (fileType) => {
+    if (fileType && fileType.startsWith('image/')) {
+      return <ImageIcon sx={{ color: "white !important", fontSize: '1.2rem' }} />;
+    }
     return <PictureAsPdfIcon sx={{ color: "white !important", fontSize: '1.2rem' }} />;
+  };
+
+  const getProcessingIcon = () => {
+    if (processingError) {
+      return <ErrorIcon sx={{ color: "white !important", fontSize: '1rem', ml: 0.5 }} />;
+    }
+    if (!processingComplete) {
+      return <CircularProgress size={16} sx={{ color: "white !important", ml: 0.5 }} />;
+    }
+    return null;
   };
 
   return (
@@ -97,8 +113,27 @@ function ChatHeader({ title, file, onMenuClick, sidebarOpen}) {
       >
         {file && (
           <Chip
-            icon={getFileIcon(file.type)}
-            label={file.name}
+            icon={
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                {getFileIcon(file.type)}
+                {getProcessingIcon()}
+              </Box>
+            }
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <span>{file.name}</span>
+                {!processingComplete && !processingError && (
+                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem' }}>
+                    Processing...
+                  </Typography>
+                )}
+                {processingError && (
+                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem' }}>
+                    Error
+                  </Typography>
+                )}
+              </Box>
+            }
             // onDelete={onRemoveFile}
             // deleteIcon={
             //   <CloseIcon

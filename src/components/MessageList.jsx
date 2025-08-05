@@ -13,12 +13,35 @@ function MessageList({ messages, loading, onEditMessage }) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  const greys = theme.palette.greys || {
-    light: '#f5f5f5',
-    medium: '#e0e0e0',
-    dark: '#9e9e9e',
-    darker: '#757575'
-  };
+  // Theme-aware colors for dark mode support
+  const getThemeColors = () => ({
+    // User message bubble
+    userBubbleBg: theme.palette.mode === 'dark' ? '#3A3A3A' : '#f5f5f5',
+    
+    // AI message bubble  
+    aiBubbleBg: theme.palette.mode === 'dark' ? '#2D2D2D' : theme.palette.background.paper,
+    
+    // Text colors
+    textPrimary: theme.palette.mode === 'dark' ? '#FFFFFF' : theme.palette.text.primary,
+    textSecondary: theme.palette.mode === 'dark' ? '#D1D5DB' : theme.palette.text.secondary,
+    
+    // Code blocks
+    codeBg: theme.palette.mode === 'dark' ? '#1E1E1E' : '#e0e0e0',
+    inlineCodeBg: theme.palette.mode === 'dark' ? '#3A3A3A' : '#e0e0e0',
+    
+    // Links
+    linkColor: theme.palette.mode === 'dark' ? '#64B5F6' : theme.palette.primary.main,
+    
+    // Blockquotes
+    blockquoteBorder: theme.palette.mode === 'dark' ? '#4A4A4A' : '#e0e0e0',
+    blockquoteText: theme.palette.mode === 'dark' ? '#B3B3B3' : theme.palette.text.secondary,
+    
+    // Tables
+    tableBorder: theme.palette.mode === 'dark' ? '#4A4A4A' : theme.palette.divider,
+    tableHeaderBg: theme.palette.mode === 'dark' ? '#3A3A3A' : '#f5f5f5',
+  });
+
+  const colors = getThemeColors();
 
   const handleEditClick = (messageIndex, messageText) => {
     if (onEditMessage) {
@@ -79,9 +102,9 @@ function MessageList({ messages, loading, onEditMessage }) {
                   p: 1.5,
                   borderRadius: '12px',
                   backgroundColor: message.sender === 'user' 
-                    ? greys.light 
-                    : theme.palette.background.paper,
-                  color: theme.palette.text.primary,
+                    ? colors.userBubbleBg 
+                    : colors.aiBubbleBg,
+                  color: colors.textPrimary,
                   boxShadow: theme.shadows[1],
                   position: 'relative',
                 }}
@@ -89,21 +112,117 @@ function MessageList({ messages, loading, onEditMessage }) {
                 <ReactMarkdown 
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    p: ({node, ...props}) => <Typography {...props} paragraph sx={{ margin: 0 }} />,
-                    h1: ({node, ...props}) => <Typography {...props} variant="h1" sx={{ fontSize: '2em' }} />,
-                    h2: ({node, ...props}) => <Typography {...props} variant="h2" sx={{ fontSize: '1.5em' }} />,
-                    h3: ({node, ...props}) => <Typography {...props} variant="h3" sx={{ fontSize: '1.17em' }} />,
-                    h4: ({node, ...props}) => <Typography {...props} variant="h4" sx={{ fontSize: '1em' }} />,
-                    h5: ({node, ...props}) => <Typography {...props} variant="h5" sx={{ fontSize: '0.83em' }} />,
-                    h6: ({node, ...props}) => <Typography {...props} variant="h6" sx={{ fontSize: '0.67em' }} />,
-                    ul: ({node, ...props}) => <ul {...props} style={{ paddingLeft: '20px', margin: '8px 0' }} />,
-                    ol: ({node, ...props}) => <ol {...props} style={{ paddingLeft: '20px', margin: '8px 0' }} />,
-                    li: ({node, ...props}) => <li {...props} style={{ marginBottom: '4px' }} />,
+                    p: ({node, ...props}) => (
+                      <Typography 
+                        {...props} 
+                        paragraph 
+                        sx={{ 
+                          margin: 0,
+                          color: colors.textPrimary,
+                        }} 
+                      />
+                    ),
+                    h1: ({node, ...props}) => (
+                      <Typography 
+                        {...props} 
+                        variant="h1" 
+                        sx={{ 
+                          fontSize: '2em',
+                          color: colors.textPrimary,
+                          fontWeight: 600,
+                        }} 
+                      />
+                    ),
+                    h2: ({node, ...props}) => (
+                      <Typography 
+                        {...props} 
+                        variant="h2" 
+                        sx={{ 
+                          fontSize: '1.5em',
+                          color: colors.textPrimary,
+                          fontWeight: 600,
+                        }} 
+                      />
+                    ),
+                    h3: ({node, ...props}) => (
+                      <Typography 
+                        {...props} 
+                        variant="h3" 
+                        sx={{ 
+                          fontSize: '1.17em',
+                          color: colors.textPrimary,
+                          fontWeight: 600,
+                        }} 
+                      />
+                    ),
+                    h4: ({node, ...props}) => (
+                      <Typography 
+                        {...props} 
+                        variant="h4" 
+                        sx={{ 
+                          fontSize: '1em',
+                          color: colors.textPrimary,
+                          fontWeight: 600,
+                        }} 
+                      />
+                    ),
+                    h5: ({node, ...props}) => (
+                      <Typography 
+                        {...props} 
+                        variant="h5" 
+                        sx={{ 
+                          fontSize: '0.83em',
+                          color: colors.textPrimary,
+                          fontWeight: 600,
+                        }} 
+                      />
+                    ),
+                    h6: ({node, ...props}) => (
+                      <Typography 
+                        {...props} 
+                        variant="h6" 
+                        sx={{ 
+                          fontSize: '0.67em',
+                          color: colors.textPrimary,
+                          fontWeight: 600,
+                        }} 
+                      />
+                    ),
+                    ul: ({node, ...props}) => (
+                      <ul 
+                        {...props} 
+                        style={{ 
+                          paddingLeft: '20px', 
+                          margin: '8px 0',
+                          color: colors.textPrimary,
+                        }} 
+                      />
+                    ),
+                    ol: ({node, ...props}) => (
+                      <ol 
+                        {...props} 
+                        style={{ 
+                          paddingLeft: '20px', 
+                          margin: '8px 0',
+                          color: colors.textPrimary,
+                        }} 
+                      />
+                    ),
+                    li: ({node, ...props}) => (
+                      <li 
+                        {...props} 
+                        style={{ 
+                          marginBottom: '4px',
+                          color: colors.textPrimary,
+                        }} 
+                      />
+                    ),
                     code: ({node, inline, ...props}) => (
                       <Box 
                         component={inline ? 'span' : 'div'} 
                         sx={{ 
-                          backgroundColor: greys.medium,
+                          backgroundColor: inline ? colors.inlineCodeBg : colors.codeBg,
+                          color: colors.textPrimary,
                           padding: inline ? '0.2em 0.4em' : '1em',
                           borderRadius: '4px',
                           fontFamily: 'monospace',
@@ -118,7 +237,7 @@ function MessageList({ messages, loading, onEditMessage }) {
                       <a 
                         {...props} 
                         style={{ 
-                          color: theme.palette.primary.main,
+                          color: colors.linkColor,
                           textDecoration: 'none',
                         }} 
                         target="_blank" 
@@ -129,10 +248,10 @@ function MessageList({ messages, loading, onEditMessage }) {
                       <blockquote 
                         {...props} 
                         style={{
-                          borderLeft: `4px solid ${greys.medium}`,
+                          borderLeft: `4px solid ${colors.blockquoteBorder}`,
                           margin: '8px 0',
                           paddingLeft: '16px',
-                          color: theme.palette.text.secondary
+                          color: colors.blockquoteText
                         }} 
                       />
                     ),
@@ -142,7 +261,8 @@ function MessageList({ messages, loading, onEditMessage }) {
                         style={{
                           borderCollapse: 'collapse',
                           width: '100%',
-                          margin: '16px 0'
+                          margin: '16px 0',
+                          color: colors.textPrimary,
                         }} 
                       />
                     ),
@@ -150,10 +270,11 @@ function MessageList({ messages, loading, onEditMessage }) {
                       <th 
                         {...props} 
                         style={{
-                          border: `1px solid ${theme.palette.divider}`,
+                          border: `1px solid ${colors.tableBorder}`,
                           padding: '8px',
                           textAlign: 'left',
-                          backgroundColor: greys.light
+                          backgroundColor: colors.tableHeaderBg,
+                          color: colors.textPrimary,
                         }} 
                       />
                     ),
@@ -161,10 +282,15 @@ function MessageList({ messages, loading, onEditMessage }) {
                       <td 
                         {...props} 
                         style={{
-                          border: `1px solid ${theme.palette.divider}`,
-                          padding: '8px'
+                          border: `1px solid ${colors.tableBorder}`,
+                          padding: '8px',
+                          color: colors.textPrimary,
                         }} 
                       />
+                    ),
+                    // Fix for any remaining text elements
+                    text: ({node, ...props}) => (
+                      <span style={{ color: colors.textPrimary }} {...props} />
                     ),
                   }}
                 >
@@ -223,8 +349,8 @@ function MessageList({ messages, loading, onEditMessage }) {
               sx={{
                 p: 2,
                 borderRadius: '12px',
-                backgroundColor: theme.palette.background.paper,
-                color: theme.palette.text.primary,
+                backgroundColor: colors.aiBubbleBg,
+                color: colors.textPrimary,
                 boxShadow: theme.shadows[1],
               }}
             >
@@ -241,7 +367,7 @@ function MessageList({ messages, loading, onEditMessage }) {
                       width: '6px',
                       height: '6px',
                       borderRadius: '50%',
-                      backgroundColor: theme.palette.grey[500],
+                      backgroundColor: theme.palette.mode === 'dark' ? '#9CA3AF' : theme.palette.grey[500],
                       animation: 'bounce 1.4s infinite ease-in-out',
                       animationDelay: `${i * 0.16}s`,
                       '@keyframes bounce': {
@@ -267,10 +393,10 @@ function MessageList({ messages, loading, onEditMessage }) {
 
 function EmptyState({ theme }) {
   // Define colors with theme fallbacks
-  const iconBg = theme.palette.grey?.[100] || theme.palette.greys?.light || "#F3F4F6";
-  const iconColor = theme.palette.text.secondary || "#6B7280";
-  const headingColor = theme.palette.text.primary || "#343541";
-  const textColor = theme.palette.text.secondary || "#6B7280";
+  const iconBg = theme.palette.mode === 'dark' ? '#3A3A3A' : (theme.palette.grey?.[100] || "#F3F4F6");
+  const iconColor = theme.palette.mode === 'dark' ? '#9CA3AF' : (theme.palette.text.secondary || "#6B7280");
+  const headingColor = theme.palette.mode === 'dark' ? '#FFFFFF' : (theme.palette.text.primary || "#343541");
+  const textColor = theme.palette.mode === 'dark' ? '#D1D5DB' : (theme.palette.text.secondary || "#6B7280");
 
   return (
     <Box

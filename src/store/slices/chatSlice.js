@@ -4,14 +4,14 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 // Async thunk for sending messages to AI
 export const sendMessageToAI = createAsyncThunk(
   'chat/sendMessageToAI',
-  async ({ message, chatId, documentText, chatHistory, apiConfig }, { rejectWithValue, signal }) => {
+  async ({ message, chatId, documentText, chatHistory, apiConfig, isImageChat }, { rejectWithValue, signal }) => {
     try {
-      const messages = [
-        {
-          role: "user",
-          content: `You are a helpful AI assistant that answers questions based on the provided document. Here is the document content:
+      let systemPrompt = '';
+      
+      if (isImageChat) {
+        systemPrompt = `You are a helpful AI assistant that analyzes images and gives concise, direct answers. The user has uploaded an image, and here's what I can see in it:
 
-          ${documentText}
+${documentText}
 
 Previous conversation:
 ${chatHistory
@@ -20,7 +20,36 @@ ${chatHistory
 
 Current question: ${message}
 
-Please answer the question based on the document content. If the answer is not in the document, say so clearly. Provide detailed and helpful responses.`,
+IMPORTANT: Give brief, direct answers. If asked for specific information (like dates, numbers, names), provide only that information without extra explanation unless specifically requested. For example:
+- If asked "What is the date?" → Just give the date
+- If asked "What color is the car?" → Just give the color
+- If asked "How many people?" → Just give the number
+
+Answer based on the image content above.`;
+      } else {
+        systemPrompt = `You are a helpful AI assistant that answers questions based on the provided document. Here is the document content:
+
+${documentText}
+
+Previous conversation:
+${chatHistory
+  .map((msg) => `${msg.sender === "user" ? "User" : "Assistant"}: ${msg.text}`)
+  .join("\n")}
+
+Current question: ${message}
+
+IMPORTANT: Give brief, direct answers. If asked for specific information (like dates, numbers, names, amounts), provide only that information without extra explanation unless specifically requested. For example:
+- If asked "What is the date?" → Just give the date
+- If asked "What is the total amount?" → Just give the amount
+- If asked "Who is the author?" → Just give the name
+
+Answer based on the document content. If the answer is not in the document, say "Not found in document."`;
+      }
+
+      const messages = [
+        {
+          role: "user",
+          content: systemPrompt,
         },
       ];
 
@@ -155,12 +184,15 @@ const chatSlice = createSlice({
     
     // File management
     updateChatFile: (state, action) => {
-      const { chatId, file, fullText } = action.payload;
+      const { chatId, file, fullText, processingComplete, processingError } = action.payload;
       const chat = state.chats.find(chat => chat.id === chatId);
       if (chat) {
-        chat.file = file;
-        chat.fullText = fullText;
-        chat.messages = []; // Clear messages when file changes
+        if (file !== undefined) chat.file = file;
+        if (fullText !== undefined) chat.fullText = fullText;
+        if (processingComplete !== undefined) chat.processingComplete = processingComplete;
+        if (processingError !== undefined) chat.processingError = processingError;
+        // Only clear messages when file changes, not during background processing
+        if (file !== undefined) chat.messages = [];
       }
     },
     

@@ -117,7 +117,7 @@ function Sidebar({
         },
       }}
     >
-      {/* Header */}
+      {/* Header with App Title and Theme Toggle */}
       <Box
         sx={{
           display: "flex",
@@ -154,20 +154,44 @@ function Sidebar({
           </Typography>
         </Box>
         
-        {!isStatic && (
-          <IconButton 
-            onClick={onClose} 
-            sx={{ 
-              color: colors.secondaryText,
-              '&:hover': { 
-                bgcolor: colors.hoverBg,
-                color: colors.sidebarText
-              } 
-            }}
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        )}
+        {/* Theme Toggle and Close Button */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          {/* Light/Dark Mode Toggle */}
+          <Tooltip title={mode === "light" ? "Switch to dark mode" : "Switch to light mode"}>
+            <IconButton
+              onClick={() => setMode(mode === "light" ? "dark" : "light")}
+              sx={{
+                color: colors.secondaryText,
+                '&:hover': { 
+                  bgcolor: colors.hoverBg,
+                  color: colors.sidebarText
+                },
+                p: 1,
+              }}
+              size="small"
+            >
+              {mode === "light" ? <Brightness4Icon fontSize="small" /> : <Brightness7Icon fontSize="small" />}
+            </IconButton>
+          </Tooltip>
+          
+          {/* Close Button */}
+          {!isStatic && (
+            <IconButton 
+              onClick={onClose} 
+              sx={{ 
+                color: colors.secondaryText,
+                '&:hover': { 
+                  bgcolor: colors.hoverBg,
+                  color: colors.sidebarText
+                },
+                p: 1,
+              }}
+              size="small"
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Box>
       </Box>
 
       {/* New Chat Button */}
@@ -196,7 +220,7 @@ function Sidebar({
 
       {/* Chat List */}
       <Box sx={{ flexGrow: 1, overflowY: 'auto', px: 2 }}>
-        {chats &&chats.length > 0 && (
+        {chats && chats.length > 0 && (
           <>
             <Typography
               sx={{
@@ -435,18 +459,6 @@ function Sidebar({
             <Typography fontSize="14px">Sign out</Typography>
           </MenuItem>
         </Menu>
-      </Box>
-
-      {/* Light/Dark Mode Toggle */}
-      <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
-        <Tooltip title={mode === "light" ? "Switch to dark mode" : "Switch to light mode"}>
-          <IconButton
-            onClick={() => setMode(mode === "light" ? "dark" : "light")}
-            color="inherit"
-          >
-            {mode === "light" ? <Brightness4Icon /> : <Brightness7Icon />}
-          </IconButton>
-        </Tooltip>
       </Box>
     </Drawer>
   );
