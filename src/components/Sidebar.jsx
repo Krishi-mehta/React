@@ -48,11 +48,11 @@ function Sidebar({
   const [userMenuAnchor, setUserMenuAnchor] = useState(null);
   const { mode: appMode, setMode: setAppMode } = useThemeMode();
 
-  // Exact color definitions matching current appearance
+  // Dynamic colors based on theme mode
   const colors = {
-    sidebarBg: "#1f1e1d",
+    sidebarBg: theme.palette.mode === 'dark' ? "#1f1e1d" : "#1f1e1d", // Keep sidebar dark in both modes
     sidebarText: "#ffffff",
-    divider: "#333333",
+    divider: theme.palette.mode === 'dark' ? "#333333" : "#333333",
     primary: "#6366F1",
     primaryHover: "#5A5FE0",
     secondaryText: "#9CA3AF",
@@ -60,7 +60,12 @@ function Sidebar({
     hoverBg: "rgba(255,255,255,0.05)",
     activeChatBg: "rgba(99, 102, 241, 0.1)",
     activeChatHoverBg: "rgba(99, 102, 241, 0.15)",
-    editBg: "rgba(255,255,255,0.1)"
+    editBg: "rgba(255,255,255,0.1)",
+    // Menu colors that adapt to theme
+    menuBg: theme.palette.mode === 'dark' ? "#2A2A2A" : "#2A2A2A", // Dark menu bg
+    menuText: theme.palette.mode === 'dark' ? "#FFFFFF" : "#FFFFFF", // White text
+    menuHover: theme.palette.mode === 'dark' ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.1)",
+    menuBorder: theme.palette.mode === 'dark' ? "#404040" : "#404040",
   };
 
   const handleEditClick = (chat) => {
@@ -433,16 +438,23 @@ function Sidebar({
           </IconButton>
         </Box>
 
+        {/* FIXED: Menu with proper theme colors */}
         <Menu
           anchorEl={userMenuAnchor}
           open={Boolean(userMenuAnchor)}
           onClose={handleUserMenuClose}
           PaperProps={{
             sx: {
-              bgcolor: colors.sidebarBg,
-              color: colors.sidebarText,
-              border: `1px solid ${colors.divider}`,
+              bgcolor: colors.menuBg,
+              color: colors.menuText,
+              border: `1px solid ${colors.menuBorder}`,
               minWidth: 160,
+              '& .MuiMenuItem-root': {
+                color: colors.menuText,
+                '&:hover': {
+                  bgcolor: colors.menuHover,
+                },
+              },
             },
           }}
         >
@@ -450,13 +462,16 @@ function Sidebar({
             onClick={handleLogout}
             sx={{
               gap: 1.5,
+              fontSize: "14px",
               '&:hover': {
-                bgcolor: colors.hoverBg,
+                bgcolor: colors.menuHover,
               }
             }}
           >
-            <LogoutIcon fontSize="small" />
-            <Typography fontSize="14px">Sign out</Typography>
+            <LogoutIcon fontSize="small" sx={{ color: colors.menuText }} />
+            <Typography fontSize="14px" sx={{ color: colors.menuText }}>
+              Sign out
+            </Typography>
           </MenuItem>
         </Menu>
       </Box>

@@ -1,4 +1,3 @@
-// store/slices/chatSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 // Async thunk for sending messages to AI
@@ -150,12 +149,26 @@ const chatSlice = createSlice({
       }
     },
     
+    // FIXED: Edit message functionality
     editMessage: (state, action) => {
       const { chatId, messageIndex } = action.payload;
       const chat = state.chats.find(chat => chat.id === chatId);
       if (chat && chat.messages) {
         // Remove all messages from the selected index onwards
         chat.messages = chat.messages.slice(0, messageIndex);
+      }
+    },
+
+    // NEW: Replace AI response functionality
+    replaceAIResponse: (state, action) => {
+      const { chatId, messageIndex, newResponse } = action.payload;
+      const chat = state.chats.find(chat => chat.id === chatId);
+      if (chat && chat.messages && chat.messages[messageIndex]) {
+        // Replace the AI response at the specific index
+        chat.messages[messageIndex] = {
+          ...chat.messages[messageIndex],
+          text: newResponse
+        };
       }
     },
     
@@ -287,6 +300,7 @@ export const {
   addMessage,
   updateMessages,
   editMessage,
+  replaceAIResponse, // Export the new action
   setLoadingForChat,
   setFileUploadLoading,
   setUserInput,

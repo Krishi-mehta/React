@@ -40,6 +40,7 @@ import {
   deleteChat,
   addMessage,
   editMessage,
+  replaceAIResponse,
   setFileUploadLoading,
   setUserInput,
   setSidebarOpen,
@@ -228,14 +229,46 @@ function ChatContainer( {mode, setMode} ) {
 
   // Function to handle editing a message
   const handleEditMessage = useCallback(
-    (messageIndex, messageText) => {
+    async (messageIndex, messageText) => {
       if (!currentChat || !chatId) return;
-
+  
       // Set the message text in the input
       dispatch(setUserInput(messageText));
-
-      // Remove all messages from the selected index onwards
-      dispatch(editMessage({ chatId, messageIndex }));
+  
+      // Check if there's an AI response after this user message
+      const hasAIResponse = messageIndex + 1 < currentChat.messages.length && 
+                           currentChat.messages[messageIndex + 1].sender === 'ai';
+  
+      if (hasAIResponse) {
+        // If there's an AI response, we'll replace it with a new one
+        // First, remove all messages from the selected index + 1 onwards
+        const updatedMessages = currentChat.messages.slice(0, messageIndex + 1);
+        dispatch(updateMessages({ chatId, messages: updatedMessages }));
+  
+        // Send new message to get updated AI response
+        try {
+          const thunkAction = sendMessageToAI({
+            message: messageText,
+            chatId,
+            documentText: currentChat.fullText,
+            chatHistory: updatedMessages.slice(0, -1), // Exclude the current user message
+            apiConfig: OPENROUTER_CONFIG,
+            isImageChat: currentChat.file?.isImage || false,
+          });
+  
+          const thunkPromise = dispatch(thunkAction);
+          dispatch(setAbortController({ chatId, abortController: thunkPromise }));
+          await thunkPromise;
+        } catch (error) {
+          console.error("Error getting updated AI response:", error);
+        }
+      } else {
+        // If no AI response follows, just remove messages from the selected index onwards
+        dispatch(editMessage({ chatId, messageIndex }));
+      }
+  
+      // Clear the input after processing
+      dispatch(setUserInput(""));
     },
     [currentChat, chatId, dispatch]
   );
