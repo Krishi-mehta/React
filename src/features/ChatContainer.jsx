@@ -64,7 +64,7 @@ const OPENROUTER_CONFIG = {
   siteName: "PDF Chat App",
 };
 
-function ChatContainer() {
+function ChatContainer( {mode, setMode} ) {
   const { currentUser } = useAuth();
   const dispatch = useAppDispatch();
   
@@ -309,7 +309,7 @@ function ChatContainer() {
         display: "flex",
         height: "100vh",
         width: "100%",
-        bgcolor: "#ffffff",
+        bgcolor: theme.palette.background.default,
       }}
     >
       <Sidebar
@@ -323,6 +323,8 @@ function ChatContainer() {
         onEdit={handleEditChatTitle}
         onDelete={handleDeleteChat}
         sidebarWidth={sidebarWidth}
+        mode={mode}
+        setMode={setMode}
       />
 
       <Box
@@ -343,7 +345,7 @@ function ChatContainer() {
               easing: theme.transitions.easing.sharp,
               duration: theme.transitions.duration.leavingScreen,
             }),
-          backgroundColor: "#ffffff",
+          backgroundColor: theme.palette.background.default,
           overflow: "hidden",
         }}
       >
@@ -407,6 +409,7 @@ function NewChatView({
 }) {
   const ACCENT_COLOR_UPLOAD = "#4F46E5";
   const ACCENT_COLOR_UPLOAD_HOVER = "#4338CA";
+  const theme = useTheme();
 
   return (
     <Box
@@ -473,12 +476,14 @@ function NewChatView({
             borderRadius: "12px",
             p: 6,
             mb: 4,
-            bgcolor: dragOver ? "#F3F4F6" : "#F9FAFB",
+            bgcolor: dragOver
+              ? (theme.palette.mode === "dark" ? "#232323" : "#F3F4F6")
+              : (theme.palette.mode === "dark" ? "#181818" : "#F9FAFB"),
             transition: "all 0.3s ease",
             cursor: "pointer",
             "&:hover": {
               borderColor: ACCENT_COLOR_UPLOAD,
-              bgcolor: "#F3F4F6",
+              bgcolor: theme.palette.mode === "dark" ? "#232323" : "#F3F4F6",
             },
             maxWidth: "600px",
             mx: "auto",

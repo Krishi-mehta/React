@@ -2,22 +2,29 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import { ThemeProvider, CssBaseline } from '@mui/material';
+import { Experimental_CssVarsProvider as CssVarsProvider } from '@mui/material/styles';
 import { Provider } from 'react-redux';
-// import { store } from './store';
 import App from './App'
 import { BrowserRouter } from 'react-router-dom';
 import { store } from './store/store';
+// import { ThemeProvider } from "@mui/material/styles";
+// import { lightTheme, darkTheme } from "./theme";
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
+
+    {/* <ThemeProvider theme={lightTheme} theme={darkTheme}> */}
     <Provider store={store}>
-      <CssBaseline />
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <CssVarsProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </CssVarsProvider>
     </Provider>
+    {/* </ThemeProvider> */}
   </StrictMode>,
 )
+
+
 
 

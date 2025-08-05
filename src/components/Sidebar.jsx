@@ -13,6 +13,7 @@ import {
   Avatar,
   Menu,
   MenuItem,
+  Tooltip,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
@@ -20,7 +21,10 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import Brightness4Icon from "@mui/icons-material/Brightness4";
+import Brightness7Icon from "@mui/icons-material/Brightness7";
 import { useAuth } from '../contexts/AuthContext';
+import { useThemeMode } from "../contexts/ThemeModeContext";
 
 function Sidebar({
   open,
@@ -32,7 +36,9 @@ function Sidebar({
   isMobile,
   onEdit,
   onDelete,
-  isStatic = false
+  isStatic = false,
+  mode,
+  setMode,
 }) {
   const theme = useTheme();
   const { currentUser, logout } = useAuth();
@@ -40,6 +46,7 @@ function Sidebar({
   const [editedTitle, setEditedTitle] = useState("");
   const [hoveredChatId, setHoveredChatId] = useState(null);
   const [userMenuAnchor, setUserMenuAnchor] = useState(null);
+  const { mode: appMode, setMode: setAppMode } = useThemeMode();
 
   // Exact color definitions matching current appearance
   const colors = {
@@ -170,7 +177,7 @@ function Sidebar({
           variant="contained"
           sx={{
             bgcolor: colors.primary,
-            color: colors.sidebarText,
+            color: "#ffffff",
             fontSize: "14px",
             borderRadius: "8px",
             py: 1.5,
@@ -189,7 +196,7 @@ function Sidebar({
 
       {/* Chat List */}
       <Box sx={{ flexGrow: 1, overflowY: 'auto', px: 2 }}>
-        {chats.length > 0 && (
+        {chats &&chats.length > 0 && (
           <>
             <Typography
               sx={{
@@ -278,6 +285,7 @@ function Sidebar({
                               textOverflow: "ellipsis",
                               fontSize: "14px",
                               fontWeight: chat.id === activeChat ? 500 : 400,
+                              color: colors.sidebarText
                             },
                           }}
                         />
@@ -427,6 +435,18 @@ function Sidebar({
             <Typography fontSize="14px">Sign out</Typography>
           </MenuItem>
         </Menu>
+      </Box>
+
+      {/* Light/Dark Mode Toggle */}
+      <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
+        <Tooltip title={mode === "light" ? "Switch to dark mode" : "Switch to light mode"}>
+          <IconButton
+            onClick={() => setMode(mode === "light" ? "dark" : "light")}
+            color="inherit"
+          >
+            {mode === "light" ? <Brightness4Icon /> : <Brightness7Icon />}
+          </IconButton>
+        </Tooltip>
       </Box>
     </Drawer>
   );
