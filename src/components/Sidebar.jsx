@@ -25,6 +25,7 @@ import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 import { useAuth } from '../contexts/AuthContext';
 import { useThemeMode } from "../contexts/ThemeModeContext";
+import { useTranslation } from 'react-i18next';
 
 function Sidebar({
   open,
@@ -42,6 +43,7 @@ function Sidebar({
 }) {
   const theme = useTheme();
   const { currentUser, logout } = useAuth();
+  const { t } = useTranslation();
   const [editingChatId, setEditingChatId] = useState(null);
   const [editedTitle, setEditedTitle] = useState("");
   const [hoveredChatId, setHoveredChatId] = useState(null);
@@ -155,7 +157,7 @@ function Sidebar({
               color: colors.sidebarText,
             }}
           >
-            FileMentor
+            {t('sidebar.title')}
           </Typography>
         </Box>
         
@@ -219,7 +221,7 @@ function Sidebar({
           }}
           onClick={onNewChat}
         >
-          + New chat
+                      + {t('chat.newChat')}
         </Button>
       </Box>
 
@@ -470,7 +472,7 @@ function Sidebar({
           >
             <LogoutIcon fontSize="small" sx={{ color: colors.menuText }} />
             <Typography fontSize="14px" sx={{ color: colors.menuText }}>
-              Sign out
+              {t('auth.signOut')}
             </Typography>
           </MenuItem>
         </Menu>

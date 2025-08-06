@@ -1,9 +1,85 @@
 // src/reducers/middleware/persistenceMiddleware.js
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
+// Helper function to convert File to serializable format
+const serializeFile = async (file) => {
+  if (!file) return null;
+  
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve({
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        lastModified: file.lastModified,
+        data: reader.result // base64 data URL
+      });
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
+// Helper function to deserialize file data
+const deserializeFile = (serializedFile) => {
+  if (!serializedFile) return null;
+  
+  // Return an object that mimics File properties but with the base64 data
+  return {
+    name: serializedFile.name,
+    type: serializedFile.type,
+    size: serializedFile.size,
+    lastModified: serializedFile.lastModified,
+    data: serializedFile.data // base64 data URL for preview
+  };
+};
+
+// Helper function to serialize chats with file data
+const serializeChatsForStorage = async (chats) => {
+  const serializedChats = [];
+  
+  for (const chat of chats) {
+    const serializedChat = { ...chat };
+    
+    // Serialize file if it exists and is a File object
+    if (chat.file && chat.file instanceof File) {
+      try {
+        serializedChat.file = await serializeFile(chat.file);
+      } catch (error) {
+        console.error('Failed to serialize file for chat:', chat.id, error);
+        serializedChat.file = null;
+      }
+    }
+    
+    serializedChats.push(serializedChat);
+  }
+  
+  return serializedChats;
+};
+
+// Helper function to deserialize chats with file data
+const deserializeChatsFromStorage = (chats) => {
+  return chats.map(chat => {
+    const deserializedChat = { ...chat };
+    
+    // Deserialize file if it exists
+    if (chat.file && typeof chat.file === 'object' && chat.file.data) {
+      deserializedChat.file = deserializeFile(chat.file);
+    }
+    
+    return deserializedChat;
+  });
+};
+
 // Helper function to get user-specific storage key
 const getUserStorageKey = (userId) => {
   return userId ? `pdfChatApp_chats_${userId}` : 'pdfChatApp_chats_guest';
+};
+
+// Helper function to get user-specific language storage key
+const getUserLanguageKey = (userId) => {
+  return userId ? `pdfChatApp_language_${userId}` : 'pdfChatApp_language_guest';
 };
 
 // Load chats from localStorage for specific user
@@ -21,7 +97,10 @@ export const initializeChatsFromStorage = createAsyncThunk(
           ? parsedChats.filter(chat => chat.userId === userId || !chat.userId) // Include legacy chats without userId
           : parsedChats;
         
-        return userChats;
+        // Deserialize file data
+        const deserializedChats = deserializeChatsFromStorage(userChats);
+        
+        return deserializedChats;
       }
       
       return [];
@@ -37,12 +116,38 @@ export const initializeChatsFromStorage = createAsyncThunk(
 );
 
 // Save chats to localStorage for specific user
-export const saveChatsToStorage = (chats, userId) => {
+export const saveChatsToStorage = async (chats, userId) => {
   try {
     const storageKey = getUserStorageKey(userId);
-    localStorage.setItem(storageKey, JSON.stringify(chats));
+    
+    // Serialize chats with file data
+    const serializedChats = await serializeChatsForStorage(chats);
+    
+    localStorage.setItem(storageKey, JSON.stringify(serializedChats));
   } catch (error) {
     console.error("Failed to save chats to localStorage:", error);
+  }
+};
+
+// Save language preference to localStorage for specific user
+export const saveLanguageToStorage = (language, userId) => {
+  try {
+    const languageKey = getUserLanguageKey(userId);
+    localStorage.setItem(languageKey, language);
+  } catch (error) {
+    console.error("Failed to save language to localStorage:", error);
+  }
+};
+
+// Load language preference from localStorage for specific user
+export const loadLanguageFromStorage = (userId) => {
+  try {
+    const languageKey = getUserLanguageKey(userId);
+    const storedLanguage = localStorage.getItem(languageKey);
+    return storedLanguage || 'English';
+  } catch (error) {
+    console.error("Failed to load language from localStorage:", error);
+    return 'English';
   }
 };
 
@@ -64,6 +169,11 @@ export const persistenceMiddleware = (store) => (next) => (action) => {
     'chat/removeChatFile',
     'chat/initializeChatsFromStorage/fulfilled'
   ];
+
+  // Actions that should trigger language persistence
+  const languagePersistActions = [
+    'chat/setSelectedLanguage'
+  ];
   
   // Check if this action should trigger persistence
   if (persistActions.some(actionType => action.type === actionType)) {
@@ -71,8 +181,19 @@ export const persistenceMiddleware = (store) => (next) => (action) => {
     // You might need to adjust this based on your auth state structure
     const userId = state.auth?.currentUser?.uid || state.user?.uid;
     
-    // Save the current chats to localStorage
-    saveChatsToStorage(state.chat.chats, userId);
+    // Save the current chats to localStorage (async but don't wait)
+    saveChatsToStorage(state.chat.chats, userId).catch(error => {
+      console.error('Failed to persist chats:', error);
+    });
+  }
+
+  // Check if this action should trigger language persistence
+  if (languagePersistActions.some(actionType => action.type === actionType)) {
+    // Extract user ID from the state or action
+    const userId = state.auth?.currentUser?.uid || state.user?.uid;
+    
+    // Save the current language to localStorage
+    saveLanguageToStorage(state.chat.selectedLanguage, userId);
   }
   
   return result;

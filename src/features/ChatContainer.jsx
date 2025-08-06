@@ -12,6 +12,7 @@ import {
 import { CloudUpload, Menu as MenuIcon, Image as ImageIcon } from "@mui/icons-material";
 import { v4 as uuidv4 } from "uuid";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 
 import MessageList from "../components/MessageList";
 import ChatHeader from "../components/ChatHeader";
@@ -33,6 +34,7 @@ import {
   useChat,
   useChatLoading,
   useChatAbortController,
+  useSelectedLanguage,
 } from "../reducers/hooks";
 import {
   addChat,
@@ -50,8 +52,10 @@ import {
   setAbortController,
   clearAbortController,
   sendMessageToAI,
+  setSelectedLanguage,
 } from "../store/slices/chatSlice";
-import { initializeChatsFromStorage } from "../reducers/middleware/persistenceMiddleware";
+import { initializeChatsFromStorage, loadLanguageFromStorage } from "../reducers/middleware/persistenceMiddleware";
+import { changeLanguage } from "../i18n";
 
 const ACCENT_COLOR = "#64B5F6";
 const ACCENT_COLOR_HOVER = "#42A5F5";
@@ -68,6 +72,7 @@ const OPENROUTER_CONFIG = {
 function ChatContainer( {mode, setMode} ) {
   const { currentUser } = useAuth();
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
   
   // Redux state
   const chats = useChats();
@@ -75,6 +80,7 @@ function ChatContainer( {mode, setMode} ) {
   const userInput = useUserInput();
   const sidebarOpen = useSidebarOpen();
   const dragOver = useDragOver();
+  const selectedLanguage = useSelectedLanguage();
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -87,12 +93,17 @@ function ChatContainer( {mode, setMode} ) {
   const currentChatLoading = useChatLoading(chatId);
   const currentAbortController = useChatAbortController(chatId);
 
-  // Load chats from localStorage on initial render (user-specific)
+  // Load chats and language from localStorage on initial render (user-specific)
   useEffect(() => {
     if (currentUser) {
       dispatch(initializeChatsFromStorage(currentUser.uid));
+      // Load saved language preference
+      const savedLanguage = loadLanguageFromStorage(currentUser.uid);
+      if (savedLanguage !== selectedLanguage) {
+        dispatch(setSelectedLanguage(savedLanguage));
+      }
     }
-  }, [dispatch, currentUser]);
+  }, [dispatch, currentUser, selectedLanguage]);
 
   // Function to stop generation
   const stopGeneration = useCallback(() => {
@@ -109,7 +120,7 @@ function ChatContainer( {mode, setMode} ) {
 
       const MAX_FILE_SIZE_MB = 15;
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-        alert(`File size exceeds the ${MAX_FILE_SIZE_MB}MB limit.`);
+        alert(t('file.fileTooLarge'));
         return;
       }
 
@@ -125,6 +136,18 @@ function ChatContainer( {mode, setMode} ) {
             ? file.name.substring(0, 22) + "..."
             : file.name;
 
+        // Create a Blob URL for the file to use in preview
+        const fileBlob = new Blob([file], { type: file.type });
+        const fileURL = URL.createObjectURL(fileBlob);
+        
+        // Convert file to base64 for localStorage persistence
+        const fileData = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        
         const newChat = {
           id: newChatId,
           title: defaultTitle,
@@ -132,7 +155,9 @@ function ChatContainer( {mode, setMode} ) {
             name: file.name,
             size: file.size,
             type: file.type,
+            lastModified: file.lastModified,
             isImage: file.type.startsWith('image/'), // Track if it's an image
+            data: fileData, // Store base64 data URL for preview and persistence
           },
           fullText: placeholderText,
           messages: [
@@ -157,7 +182,7 @@ function ChatContainer( {mode, setMode} ) {
 
       } catch (error) {
         console.error("Error processing file:", error);
-        alert("Failed to process file: " + error.message);
+        alert(t('file.fileProcessingError') + ": " + error.message);
       } finally {
         dispatch(setFileUploadLoading(false));
       }
@@ -185,7 +210,7 @@ function ChatContainer( {mode, setMode} ) {
       ];
 
       if (!allowedTypes.includes(file.type.toLowerCase())) {
-        alert("Please upload a PDF, DOC, DOCX, TXT, or Image file (JPG, PNG, GIF, BMP, WebP).");
+        alert(t('file.unsupportedFormat'));
         event.target.value = null;
         return;
       }
@@ -220,7 +245,7 @@ function ChatContainer( {mode, setMode} ) {
         if (allowedExtensions.includes(fileExtension) || file.type.startsWith('image/')) {
           await handleFileUpload(file);
         } else {
-          alert("Please upload a PDF, DOC, DOCX, TXT, or Image file.");
+          alert(t('file.unsupportedFormat'));
         }
       }
     },
@@ -254,6 +279,7 @@ function ChatContainer( {mode, setMode} ) {
             chatHistory: updatedMessages.slice(0, -1), // Exclude the current user message
             apiConfig: OPENROUTER_CONFIG,
             isImageChat: currentChat.file?.isImage || false,
+            selectedLanguage,
           });
   
           const thunkPromise = dispatch(thunkAction);
@@ -270,7 +296,7 @@ function ChatContainer( {mode, setMode} ) {
       // Clear the input after processing
       dispatch(setUserInput(""));
     },
-    [currentChat, chatId, dispatch]
+    [currentChat, chatId, dispatch, selectedLanguage]
   );
 
   const onSendMessage = useCallback(async () => {
@@ -280,7 +306,7 @@ function ChatContainer( {mode, setMode} ) {
     // Check if API key is configured
     if (!OPENROUTER_CONFIG.apiKey) {
       alert(
-        "Please configure your OpenRouter API key in the .env file as VITE_API_KEY"
+        t('errors.general') + ": " + t('errors.unauthorized')
       );
       return;
     }
@@ -303,6 +329,7 @@ function ChatContainer( {mode, setMode} ) {
         chatHistory: currentChat.messages,
         apiConfig: OPENROUTER_CONFIG,
         isImageChat: currentChat.file?.isImage || false, // Pass image chat flag
+        selectedLanguage,
       });
 
       const thunkPromise = dispatch(thunkAction);
@@ -320,6 +347,7 @@ function ChatContainer( {mode, setMode} ) {
     chatId,
     currentChat,
     dispatch,
+    selectedLanguage,
   ]);
 
   const handleNewChat = useCallback(() => {
@@ -357,6 +385,12 @@ function ChatContainer( {mode, setMode} ) {
       navigate("/chat/new");
     }
   }, [currentChat, chatId, dispatch, navigate]);
+
+  const handleLanguageChange = useCallback((newLanguage) => {
+    dispatch(setSelectedLanguage(newLanguage));
+    // Also change the i18n language
+    changeLanguage(newLanguage);
+  }, [dispatch]);
 
   const sidebarWidth = 280;
 
@@ -422,6 +456,7 @@ function ChatContainer( {mode, setMode} ) {
             handleDragLeave={handleDragLeave}
             handleDrop={handleDrop}
             handleFileInputChange={handleFileInputChange}
+            t={t}
           />
         ) : (
           <ChatView
@@ -440,6 +475,9 @@ function ChatContainer( {mode, setMode} ) {
             onSendMessage={onSendMessage}
             onStopGeneration={stopGeneration}
             onEditMessage={handleEditMessage}
+            selectedLanguage={selectedLanguage}
+            onLanguageChange={handleLanguageChange}
+            t={t}
           />
         )}
       </Box>
@@ -464,6 +502,7 @@ function NewChatView({
   handleDragLeave,
   handleDrop,
   handleFileInputChange,
+  t,
 }) {
   const ACCENT_COLOR_UPLOAD = "#4F46E5";
   const ACCENT_COLOR_UPLOAD_HOVER = "#4338CA";
@@ -620,7 +659,7 @@ function NewChatView({
               lineHeight: "28px",
             }}
           >
-            Start chat with your files
+            {t('chat.startNewChat')}
           </Typography>
 
           <Typography
@@ -632,7 +671,7 @@ function NewChatView({
               fontSize: { xs: "0.75rem", sm: "0.875rem" },
             }}
           >
-            Click or Drag & Drop to upload PDF, DOC, DOCX, TXT files or Images (JPG, PNG, GIF) up to 15MB
+            {t('chat.dragDropFiles')}
           </Typography>
 
           <input
@@ -686,6 +725,8 @@ function ChatView({
   onSendMessage,
   onStopGeneration,
   onEditMessage,
+  selectedLanguage,
+  onLanguageChange,
 }) {
   const { chatId } = useParams();
   const navigate = useNavigate();
@@ -731,6 +772,8 @@ function ChatView({
         onRemoveFile={onRemoveFile}
         processingComplete={currentChat.processingComplete !== false}
         processingError={currentChat.processingError || false}
+        selectedLanguage={selectedLanguage}
+        onLanguageChange={onLanguageChange}
       />
       <MessageList
         messages={currentChat.messages}
@@ -751,4 +794,4 @@ function ChatView({
   );
 }
 
-export default ChatContainer; 
+export default ChatContainer;

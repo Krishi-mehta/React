@@ -30,3 +30,6 @@ export const useChatAbortController = (chatId) =>
   useAppSelector(state =>
     chatId ? state.chat.abortControllers[chatId] : null
   );
+
+// Selector for getting selected language
+export const useSelectedLanguage = () => useAppSelector(state => state.chat.selectedLanguage);

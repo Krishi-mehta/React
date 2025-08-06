@@ -277,3 +277,13 @@ export const validateFile = (file) => {
   }
   return { valid: true };
 };
+
+// Generic: Convert any file to base64 Data URL
+export const fileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result); // Full Data URL
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};

@@ -3,10 +3,15 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 // Async thunk for sending messages to AI
 export const sendMessageToAI = createAsyncThunk(
   'chat/sendMessageToAI',
-  async ({ message, chatId, documentText, chatHistory, apiConfig, isImageChat }, { rejectWithValue, signal }) => {
+  async ({ message, chatId, documentText, chatHistory, apiConfig, isImageChat, selectedLanguage }, { rejectWithValue, signal }) => {
     try {
       let systemPrompt = '';
       
+      // Language instruction based on selected language
+      const languageInstruction = selectedLanguage && selectedLanguage !== 'English' 
+        ? `\n\nLANGUAGE INSTRUCTION: Please respond in ${selectedLanguage}. If the user asks a question in ${selectedLanguage}, answer in ${selectedLanguage}. If they ask in English, you can respond in ${selectedLanguage} or English based on the context.`
+        : '';
+
       if (isImageChat) {
         systemPrompt = `You are a helpful AI assistant that analyzes images and gives concise, direct answers. The user has uploaded an image, and here's what I can see in it:
 
@@ -24,7 +29,7 @@ IMPORTANT: Give brief, direct answers. If asked for specific information (like d
 - If asked "What color is the car?" → Just give the color
 - If asked "How many people?" → Just give the number
 
-Answer based on the image content above.`;
+Answer based on the image content above.${languageInstruction}`;
       } else {
         systemPrompt = `You are a helpful AI assistant that answers questions based on the provided document. Here is the document content:
 
@@ -42,7 +47,7 @@ IMPORTANT: Give brief, direct answers. If asked for specific information (like d
 - If asked "What is the total amount?" → Just give the amount
 - If asked "Who is the author?" → Just give the name
 
-Answer based on the document content. If the answer is not in the document, say "Not found in document."`;
+Answer based on the document content. If the answer is not in the document, say "Not found in document."${languageInstruction}`;
       }
 
       const messages = [
@@ -105,6 +110,7 @@ const initialState = {
   sidebarOpen: true,
   dragOver: false,
   abortControllers: {}, // Store abort controllers per chat
+  selectedLanguage: 'English', // Default language
 };
 
 const chatSlice = createSlice({
@@ -235,6 +241,11 @@ const chatSlice = createSlice({
       state.chats = action.payload;
     },
     
+    // Language management
+    setSelectedLanguage: (state, action) => {
+      state.selectedLanguage = action.payload;
+    },
+    
     // Clear all data (for logout/reset)
     clearAllData: (state) => {
       state.chats = [];
@@ -242,6 +253,7 @@ const chatSlice = createSlice({
       state.fileUploadLoading = false;
       state.userInput = '';
       state.abortControllers = {};
+      state.selectedLanguage = 'English';
     },
   },
   extraReducers: (builder) => {
@@ -311,6 +323,7 @@ export const {
   setAbortController,
   clearAbortController,
   loadChatsFromStorage,
+  setSelectedLanguage,
   clearAllData,
 } = chatSlice.actions;
 

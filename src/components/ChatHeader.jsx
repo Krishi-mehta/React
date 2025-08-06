@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -13,11 +13,19 @@ import MenuIcon from "@mui/icons-material/Menu";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import ImageIcon from "@mui/icons-material/Image";
 import ErrorIcon from "@mui/icons-material/Error";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import { useTranslation } from 'react-i18next';
 // import CloseIcon from "@mui/icons-material/Close";
 
-function ChatHeader({ title, file, onMenuClick, sidebarOpen, processingComplete = true, processingError = false}) {
+import FilePreview from "./FilePreview";
+import LanguageDropdown from "./LanguageDropdown";
+
+
+function ChatHeader({ title, file, onMenuClick, sidebarOpen, processingComplete = true, processingError = false, selectedLanguage, onLanguageChange }) {
+  const [filePreviewOpen, setFilePreviewOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { t } = useTranslation();
 
   // Safe color access with fallbacks
   const chipBackground = theme.palette.custom?.chipBackground || "#6366F1";
@@ -70,7 +78,7 @@ function ChatHeader({ title, file, onMenuClick, sidebarOpen, processingComplete 
       >
         {/* Menu Icon */}
         {(isMobile || !sidebarOpen) && (
-          <Tooltip title="Open Menu" enterDelay={500}>
+          <Tooltip title={t('sidebar.toggleSidebar')} enterDelay={500}>
             <IconButton
               onClick={onMenuClick}
               sx={{
@@ -102,7 +110,7 @@ function ChatHeader({ title, file, onMenuClick, sidebarOpen, processingComplete 
         </Typography>
       </Box>
 
-      {/* Right Section - File Chip */}
+      {/* Right Section - Language Dropdown, File Chip and Preview Button */}
       <Box
         sx={{
           display: "flex",
@@ -111,81 +119,113 @@ function ChatHeader({ title, file, onMenuClick, sidebarOpen, processingComplete 
           gap: 1.5,
         }}
       >
+        {/* Language Dropdown */}
+        <LanguageDropdown 
+          selectedLanguage={selectedLanguage} 
+          onLanguageChange={onLanguageChange}
+        />
+        
         {file && (
-          <Chip
-            icon={
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                {getFileIcon(file.type)}
-                {getProcessingIcon()}
-              </Box>
-            }
-            label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <span>{file.name}</span>
-                {!processingComplete && !processingError && (
-                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem' }}>
-                    Processing...
-                  </Typography>
-                )}
-                {processingError && (
-                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem' }}>
-                    Error
-                  </Typography>
-                )}
-              </Box>
-            }
-            // onDelete={onRemoveFile}
-            // deleteIcon={
-            //   <CloseIcon
-            //     sx={{
-            //       color: "white !important",
-            //       fontSize: '0.9rem',
-            //       "&:hover": {
-            //         color: `${theme.palette.background.default} !important`,
-            //       },
-            //     }}
-            //   />
-            // }
-            sx={{
-              bgcolor: chipBackground,
-              color: "white",
-              fontWeight: 500,
-              fontSize: { xs: "0.75rem", sm: "0.8125rem" },
-              height: '38px',
-              maxWidth: { xs: "120px", sm: "180px", md: "250px" },
-              borderRadius: '8px',
-              px: '10px',
-              '& .MuiChip-label': {
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                paddingLeft: '4px',
-                paddingRight: '4px',
-              },
-              '& .MuiChip-icon': {
-                marginLeft: '6px',
-                marginRight: '2px',
-              },
-              "& .MuiChip-deleteIcon": {
+          <>
+                              <Tooltip title={t('file.preview')}>
+              <IconButton 
+                onClick={() => setFilePreviewOpen(true)}
+                disabled={!processingComplete || processingError}
+                sx={{
+                  color: theme.palette.primary.main,
+                  bgcolor: theme.palette.action.hover,
+                  '&:hover': {
+                    bgcolor: theme.palette.action.selected,
+                  },
+                }}
+              >
+                <VisibilityIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Chip
+              icon={
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  {getFileIcon(file.type)}
+                  {getProcessingIcon()}
+                </Box>
+              }
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <span>{file.name}</span>
+                  {!processingComplete && !processingError && (
+                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem' }}>
+                      Processing...
+                    </Typography>
+                  )}
+                  {processingError && (
+                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem' }}>
+                      Error
+                    </Typography>
+                  )}
+                </Box>
+              }
+              // onDelete={onRemoveFile}
+              // deleteIcon={
+              //   <CloseIcon
+              //     sx={{
+              //       color: "white !important",
+              //       fontSize: '0.9rem',
+              //       "&:hover": {
+              //         color: `${theme.palette.background.default} !important`,
+              //       },
+              //     }}
+              //   />
+              // }
+              sx={{
+                bgcolor: chipBackground,
                 color: "white",
-                fontSize: '0.9rem',
-                marginRight: '6px',
-                marginLeft: '2px',
-                "&:hover": {
-                  color: theme.palette.background.default,
-                  bgcolor: "rgba(255,255,255,0.1)",
+                fontWeight: 500,
+                fontSize: { xs: "0.75rem", sm: "0.8125rem" },
+                height: '38px',
+                maxWidth: { xs: "120px", sm: "180px", md: "250px" },
+                borderRadius: '8px',
+                px: '10px',
+                '& .MuiChip-label': {
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  paddingLeft: '4px',
+                  paddingRight: '4px',
                 },
-              },
-              "&:hover": {
-                bgcolor: chipHoverBackground,
-              },
-              transition: theme.transitions.create(['background-color'], {
-                duration: theme.transitions.duration.short,
-              }),
-            }}
-          />
+                '& .MuiChip-icon': {
+                  marginLeft: '6px',
+                  marginRight: '2px',
+                },
+                "& .MuiChip-deleteIcon": {
+                  color: "white",
+                  fontSize: '0.9rem',
+                  marginRight: '6px',
+                  marginLeft: '2px',
+                  "&:hover": {
+                    color: theme.palette.background.default,
+                    bgcolor: "rgba(255,255,255,0.1)",
+                  },
+                },
+                "&:hover": {
+                  bgcolor: chipHoverBackground,
+                },
+                transition: theme.transitions.create(['background-color'], {
+                  duration: theme.transitions.duration.short,
+                }),
+              }}
+            />
+          </>
         )}
       </Box>
+      
+      {/* File Preview Component */}
+      {file && (
+        <FilePreview 
+          open={filePreviewOpen} 
+          onClose={() => setFilePreviewOpen(false)} 
+          file={file}
+        />
+      )}
     </Box>
   );
 }

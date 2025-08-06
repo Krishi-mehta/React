@@ -12,6 +12,7 @@ import {
 import SendIcon from "@mui/icons-material/Send";
 import StopIcon from "@mui/icons-material/Stop";
 import SmartSuggestions from "./SmartSuggestions";
+import { useTranslation } from 'react-i18next';
 
 // Redux imports
 import { useAppDispatch, useUserInput } from "../reducers/hooks";
@@ -25,6 +26,7 @@ function InputArea({
 }) {
   const dispatch = useAppDispatch();
   const userInput = useUserInput(); // Get from Redux state
+  const { t } = useTranslation();
   
   const textFieldRef = useRef(null);
   const inputElementRef = useRef(null);
@@ -124,7 +126,7 @@ function InputArea({
         >
           <TextField
             fullWidth
-            placeholder={fullText ? "Ask a question..." : "Please upload a document first"}
+                            placeholder={fullText ? t('chat.typeMessage') : t('chat.dragDropFiles')}
             value={userInput}
             onChange={(e) => handleInputChange(e.target.value)}
             multiline
@@ -162,7 +164,7 @@ function InputArea({
           />
 
           {loading ? (
-            <Tooltip title="Stop generation" enterDelay={500}>
+            <Tooltip title={t('chat.stopGeneration')} enterDelay={500}>
               <IconButton
                 onClick={onStopGeneration}
                 sx={{
@@ -189,7 +191,7 @@ function InputArea({
               </IconButton>
             </Tooltip>
           ) : (
-            <Tooltip title={fullText ? "Send message" : "Upload a document first"} enterDelay={500}>
+            <Tooltip title={fullText ? t('chat.send') : t('file.uploadFile')} enterDelay={500}>
               <span>
                 <IconButton
                   onClick={onSend}

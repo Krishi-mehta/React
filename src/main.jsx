@@ -7,6 +7,7 @@ import { Provider } from 'react-redux';
 import App from './App'
 import { BrowserRouter } from 'react-router-dom';
 import { store } from './store/store';
+import './i18n'; // Initialize i18n
 // import { ThemeProvider } from "@mui/material/styles";
 // import { lightTheme, darkTheme } from "./theme";
 
