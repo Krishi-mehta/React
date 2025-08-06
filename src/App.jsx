@@ -9,6 +9,7 @@ import { ThemeProvider} from '@mui/material';
 import Sidebar from "./components/Sidebar";
 import { lightTheme, darkTheme } from "./theme";
 import { ThemeModeProvider } from './contexts/ThemeModeContext';
+// import I18nTest from "./components/I18nTest";
 
 function AppContent() {
   const [mode, setMode] = useState("light");
@@ -34,6 +35,9 @@ function AppContent() {
       <Box sx={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden" }}>
         {/* Only show sidebar if user is authenticated and not on login page */}
         {currentUser && <Sidebar mode={mode} setMode={setMode} />}
+        
+        {/* Temporary i18n test new component */}
+        {/* <I18nTest /> */}
         
         <Routes>
           {/* Public route for login */}
