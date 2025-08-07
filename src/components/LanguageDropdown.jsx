@@ -8,30 +8,41 @@ import {
   useTheme,
 } from '@mui/material';
 import LanguageIcon from '@mui/icons-material/Language';
+import { useTranslation } from 'react-i18next';
 
 const languages = [
-  { code: 'English', name: 'English' },
-  { code: 'Chinese', name: '中文' },
-  { code: 'Japanese', name: '日本語' },
-  { code: 'Spanish', name: 'Español' },
-  { code: 'French', name: 'Français' },
-  { code: 'German', name: 'Deutsch' },
-  { code: 'Italian', name: 'Italiano' },
-  { code: 'Dutch', name: 'Nederlands' },
-  { code: 'Korean', name: '한국어' },
-  { code: 'Portuguese', name: 'Português' },
-  { code: 'Russian', name: 'Русский' },
-  { code: 'Arabic', name: 'العربية' },
-  { code: 'Turkish', name: 'Türkçe' },
-  { code: 'Hindi', name: 'हिन्दी' },
+  { code: 'English', name: 'English', nativeName: 'English' },
+  { code: 'Chinese', name: 'Chinese', nativeName: '中文' },
+  { code: 'Japanese', name: 'Japanese', nativeName: '日本語' },
+  { code: 'Spanish', name: 'Spanish', nativeName: 'Español' },
+  { code: 'French', name: 'French', nativeName: 'Français' },
+  { code: 'German', name: 'German', nativeName: 'Deutsch' },
+  { code: 'Italian', name: 'Italian', nativeName: 'Italiano' },
+  { code: 'Dutch', name: 'Dutch', nativeName: 'Nederlands' },
+  { code: 'Korean', name: 'Korean', nativeName: '한국어' },
+  { code: 'Portuguese', name: 'Portuguese', nativeName: 'Português' },
+  { code: 'Russian', name: 'Russian', nativeName: 'Русский' },
+  { code: 'Arabic', name: 'Arabic', nativeName: 'العربية' },
+  { code: 'Turkish', name: 'Turkish', nativeName: 'Türkçe' },
+  { code: 'Hindi', name: 'Hindi', nativeName: 'हिन्दी' },
 ];
 
-function LanguageDropdown({ selectedLanguage, onLanguageChange }) {
+function LanguageDropdown() {
   const [open, setOpen] = useState(false);
   const theme = useTheme();
+  const { i18n } = useTranslation();
+
+  // Get current language, default to 'English' if not found
+  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
 
   const handleChange = (event) => {
-    onLanguageChange(event.target.value);
+    const newLanguage = event.target.value;
+    i18n.changeLanguage(newLanguage);
+    
+    // Save language preference to localStorage
+    if (typeof Storage !== 'undefined') {
+      localStorage.setItem('selectedLanguage', newLanguage);
+    }
   };
 
   const handleClose = () => {
@@ -78,23 +89,26 @@ function LanguageDropdown({ selectedLanguage, onLanguageChange }) {
         }}
       >
         <Select
-          value={selectedLanguage}
+          value={currentLanguage.code}
           onChange={handleChange}
           onClose={handleClose}
           onOpen={handleOpen}
           open={open}
           displayEmpty
-          renderValue={(value) => (
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                fontWeight: 500,
-                color: theme.palette.text.primary,
-              }}
-            >
-              {value}
-            </Typography>
-          )}
+          renderValue={(value) => {
+            const selectedLang = languages.find(lang => lang.code === value);
+            return (
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  fontWeight: 500,
+                  color: theme.palette.text.primary,
+                }}
+              >
+                {selectedLang ? selectedLang.nativeName : 'English'}
+              </Typography>
+            );
+          }}
         >
           {languages.map((language) => (
             <MenuItem 
@@ -116,7 +130,7 @@ function LanguageDropdown({ selectedLanguage, onLanguageChange }) {
                 },
               }}
             >
-              {language.name}
+              {language.nativeName}
             </MenuItem>
           ))}
         </Select>
@@ -125,4 +139,4 @@ function LanguageDropdown({ selectedLanguage, onLanguageChange }) {
   );
 }
 
-export default LanguageDropdown; 
+export default LanguageDropdown;

@@ -3,9 +3,11 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Box, Typography, useTheme, IconButton, Tooltip } from '@mui/material';
 import { ChatBubbleOutline, SmartToy, Edit } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 function MessageList({ messages, loading, onEditMessage }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const messagesEndRef = useRef(null);
 
   // Auto-scroll to bottom on new messages/loading
@@ -299,7 +301,7 @@ function MessageList({ messages, loading, onEditMessage }) {
 
                 {/* Edit button for user messages */}
                 {message.sender === 'user' && (
-                  <Tooltip title="Edit message" arrow>
+                  <Tooltip title={t('chat.editMessage')} arrow>
                     <IconButton
                       className="edit-button"
                       size="small"
@@ -392,6 +394,7 @@ function MessageList({ messages, loading, onEditMessage }) {
 }
 
 function EmptyState({ theme }) {
+  const { t } = useTranslation();
   // Define colors with theme fallbacks
   const iconBg = theme.palette.mode === 'dark' ? '#3A3A3A' : (theme.palette.grey?.[100] || "#F3F4F6");
   const iconColor = theme.palette.mode === 'dark' ? '#9CA3AF' : (theme.palette.text.secondary || "#6B7280");
@@ -440,7 +443,7 @@ function EmptyState({ theme }) {
           fontSize: { xs: "1.25rem", sm: "1.5rem" },
         }}
       >
-        How can I help you today?
+        {t('chat.howCanIHelp')}
       </Typography>
 
       <Typography
@@ -452,7 +455,7 @@ function EmptyState({ theme }) {
           fontSize: { xs: "0.9rem", sm: "1rem" },
         }}
       >
-        I can help you analyze and answer questions about your uploaded documents. Ask me anything!
+        {t('chat.emptyStateDescription')}
       </Typography>
     </Box>
   );

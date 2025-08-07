@@ -240,7 +240,7 @@ function Sidebar({
                 px: 1,
               }}
             >
-              Today
+              {t('chat.today')}
             </Typography>
             
             <List disablePadding>

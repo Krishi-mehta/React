@@ -7,9 +7,11 @@ import {
   ClickAwayListener,
   useTheme 
 } from "@mui/material";
+import { useTranslation } from 'react-i18next';
 
 function SmartSuggestions({ userInput, fullText, onInputChange, anchorEl }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [suggestions, setSuggestions] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [isOpen, setIsOpen] = useState(false);
@@ -43,10 +45,10 @@ function SmartSuggestions({ userInput, fullText, onInputChange, anchorEl }) {
     const matchingTerms = uniqueTerms.filter((term) => term.includes(inputLower));
 
     const templates = [
-      (term) => `What is ${term}?`,
-      (term) => `How is ${term} used?`,
-      (term) => `Explain ${term} in the context of the document`,
-      (term) => `What information involves ${term}?`,
+      (term) => t('chat.whatIs', { term }),
+      (term) => t('chat.howIsUsed', { term }),
+      (term) => t('chat.explainInContext', { term }),
+      (term) => t('chat.whatInformationInvolves', { term }),
     ];
 
     let allSuggestions = [];
@@ -58,10 +60,10 @@ function SmartSuggestions({ userInput, fullText, onInputChange, anchorEl }) {
     } else {
       const availableTerms = uniqueTerms.length > 0 ? uniqueTerms : ["content", "information", "details", "summary"];
       const questionStems = [
-        "What is the main",
-        "Can you explain",
-        "What does this document say about",
-        "Tell me about",
+        t('chat.whatIsMain'),
+        t('chat.canYouExplain'),
+        t('chat.whatDoesDocumentSay'),
+        t('chat.tellMeAbout'),
       ];
       allSuggestions = availableTerms
         .sort(() => 0.5 - Math.random())

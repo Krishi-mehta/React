@@ -1,16 +1,28 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 // Async thunk for sending messages to AI
 export const sendMessageToAI = createAsyncThunk(
-  'chat/sendMessageToAI',
-  async ({ message, chatId, documentText, chatHistory, apiConfig, isImageChat, selectedLanguage }, { rejectWithValue, signal }) => {
+  "chat/sendMessageToAI",
+  async (
+    {
+      message,
+      chatId,
+      documentText,
+      chatHistory,
+      apiConfig,
+      isImageChat,
+      selectedLanguage,
+    },
+    { rejectWithValue, signal }
+  ) => {
     try {
-      let systemPrompt = '';
-      
+      let systemPrompt = "";
+
       // Language instruction based on selected language
-      const languageInstruction = selectedLanguage && selectedLanguage !== 'English' 
-        ? `\n\nLANGUAGE INSTRUCTION: Please respond in ${selectedLanguage}. If the user asks a question in ${selectedLanguage}, answer in ${selectedLanguage}. If they ask in English, you can respond in ${selectedLanguage} or English based on the context.`
-        : '';
+      const languageInstruction =
+        selectedLanguage && selectedLanguage !== "English"
+          ? `\n\nLANGUAGE INSTRUCTION: Please respond in ${selectedLanguage}. If the user asks a question in ${selectedLanguage}, answer in ${selectedLanguage}. If they ask in English, you can respond in ${selectedLanguage} or English based on the context.`
+          : "";
 
       if (isImageChat) {
         systemPrompt = `You are a helpful AI assistant that analyzes images and gives concise, direct answers. The user has uploaded an image, and here's what I can see in it:
@@ -57,29 +69,28 @@ Answer based on the document content. If the answer is not in the document, say 
         },
       ];
 
-      const response = await fetch(
-        `${apiConfig.baseUrl}/chat/completions`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiConfig.apiKey}`,
-            "HTTP-Referer": apiConfig.siteUrl,
-            "X-Title": apiConfig.siteName,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: apiConfig.model,
-            messages: messages,
-            max_tokens: 2000,
-            temperature: 0.7,
-          }),
-          signal,
-        }
-      );
+      const response = await fetch(`${apiConfig.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiConfig.apiKey}`,
+          "HTTP-Referer": apiConfig.siteUrl,
+          "X-Title": apiConfig.siteName,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: apiConfig.model,
+          messages: messages,
+          max_tokens: 2000,
+          temperature: 0.7,
+        }),
+        signal,
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`OpenRouter API Error: ${response.status} - ${errorText}`);
+        throw new Error(
+          `OpenRouter API Error: ${response.status} - ${errorText}`
+        );
       }
 
       const data = await response.json();
@@ -106,59 +117,59 @@ const initialState = {
   chats: [],
   loadingStates: {}, // Object to track loading state per chat
   fileUploadLoading: false,
-  userInput: '',
+  userInput: "",
   sidebarOpen: true,
   dragOver: false,
   abortControllers: {}, // Store abort controllers per chat
-  selectedLanguage: 'English', // Default language
+  selectedLanguage: "English", // Default language
 };
 
 const chatSlice = createSlice({
-  name: 'chat',
+  name: "chat",
   initialState,
   reducers: {
     // Chat management
     addChat: (state, action) => {
       state.chats.push(action.payload);
     },
-    
+
     updateChatTitle: (state, action) => {
       const { chatId, title } = action.payload;
-      const chat = state.chats.find(chat => chat.id === chatId);
+      const chat = state.chats.find((chat) => chat.id === chatId);
       if (chat) {
         chat.title = title;
       }
     },
-    
+
     deleteChat: (state, action) => {
       const chatId = action.payload;
-      state.chats = state.chats.filter(chat => chat.id !== chatId);
+      state.chats = state.chats.filter((chat) => chat.id !== chatId);
       // Clean up loading state and abort controller
       delete state.loadingStates[chatId];
       delete state.abortControllers[chatId];
     },
-    
+
     // Message management
     addMessage: (state, action) => {
       const { chatId, message } = action.payload;
-      const chat = state.chats.find(chat => chat.id === chatId);
+      const chat = state.chats.find((chat) => chat.id === chatId);
       if (chat) {
         chat.messages.push(message);
       }
     },
-    
+
     updateMessages: (state, action) => {
       const { chatId, messages } = action.payload;
-      const chat = state.chats.find(chat => chat.id === chatId);
+      const chat = state.chats.find((chat) => chat.id === chatId);
       if (chat) {
         chat.messages = messages;
       }
     },
-    
+
     // FIXED: Edit message functionality
     editMessage: (state, action) => {
       const { chatId, messageIndex } = action.payload;
-      const chat = state.chats.find(chat => chat.id === chatId);
+      const chat = state.chats.find((chat) => chat.id === chatId);
       if (chat && chat.messages) {
         // Remove all messages from the selected index onwards
         chat.messages = chat.messages.slice(0, messageIndex);
@@ -168,92 +179,104 @@ const chatSlice = createSlice({
     // NEW: Replace AI response functionality
     replaceAIResponse: (state, action) => {
       const { chatId, messageIndex, newResponse } = action.payload;
-      const chat = state.chats.find(chat => chat.id === chatId);
+      const chat = state.chats.find((chat) => chat.id === chatId);
       if (chat && chat.messages && chat.messages[messageIndex]) {
         // Replace the AI response at the specific index
         chat.messages[messageIndex] = {
           ...chat.messages[messageIndex],
-          text: newResponse
+          text: newResponse,
         };
       }
     },
-    
+
     // Loading states
     setLoadingForChat: (state, action) => {
       const { chatId, loading } = action.payload;
       state.loadingStates[chatId] = loading;
     },
-    
+
     setFileUploadLoading: (state, action) => {
       state.fileUploadLoading = action.payload;
     },
-    
+
     // UI states
     setUserInput: (state, action) => {
       state.userInput = action.payload;
     },
-    
+
     setSidebarOpen: (state, action) => {
       state.sidebarOpen = action.payload;
     },
-    
+
     setDragOver: (state, action) => {
       state.dragOver = action.payload;
     },
-    
+
     // File management
     updateChatFile: (state, action) => {
-      const { chatId, file, fullText, processingComplete, processingError } = action.payload;
-      const chat = state.chats.find(chat => chat.id === chatId);
+      const { chatId, file, fullText, processingComplete, processingError } =
+        action.payload;
+      const chat = state.chats.find((chat) => chat.id === chatId);
       if (chat) {
-        if (file !== undefined) chat.file = file;
+        // Store only the serializable file metadata in Redux state
+        if (file !== undefined) {
+          chat.file = {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            data: file.data, // Make sure to keep the data
+            isImage: file.type.startsWith("image/"),
+            // You can add other metadata here, but NOT the file data itself
+          };
+        }
         if (fullText !== undefined) chat.fullText = fullText;
-        if (processingComplete !== undefined) chat.processingComplete = processingComplete;
-        if (processingError !== undefined) chat.processingError = processingError;
-        // Only clear messages when file changes, not during background processing
+        if (processingComplete !== undefined)
+          chat.processingComplete = processingComplete;
+        if (processingError !== undefined)
+          chat.processingError = processingError;
         if (file !== undefined) chat.messages = [];
       }
     },
-    
+
     removeChatFile: (state, action) => {
       const chatId = action.payload;
-      const chat = state.chats.find(chat => chat.id === chatId);
+      const chat = state.chats.find((chat) => chat.id === chatId);
       if (chat) {
         chat.file = null;
-        chat.fullText = '';
+        chat.fullText = "";
         chat.messages = [];
       }
     },
-    
+
     // Abort controller management
     setAbortController: (state, action) => {
       const { chatId, abortController } = action.payload;
       state.abortControllers[chatId] = abortController;
     },
-    
+
     clearAbortController: (state, action) => {
       const chatId = action.payload;
       delete state.abortControllers[chatId];
     },
-    
+
     // Load chats from localStorage
     loadChatsFromStorage: (state, action) => {
       state.chats = action.payload;
     },
-    
+
     // Language management
     setSelectedLanguage: (state, action) => {
       state.selectedLanguage = action.payload;
     },
-    
+
     // Clear all data (for logout/reset)
     clearAllData: (state) => {
       state.chats = [];
       state.loadingStates = {};
       state.fileUploadLoading = false;
-      state.userInput = '';
+      state.userInput = "";
       state.abortControllers = {};
-      state.selectedLanguage = 'English';
+      state.selectedLanguage = "English";
     },
   },
   extraReducers: (builder) => {
@@ -265,40 +288,48 @@ const chatSlice = createSlice({
       })
       .addCase(sendMessageToAI.fulfilled, (state, action) => {
         const { chatId, text } = action.payload;
-        const chat = state.chats.find(chat => chat.id === chatId);
+        const chat = state.chats.find((chat) => chat.id === chatId);
         if (chat) {
-          chat.messages.push({ sender: 'ai', text });
+          chat.messages.push({ sender: "ai", text });
         }
         state.loadingStates[chatId] = false;
         delete state.abortControllers[chatId];
       })
       .addCase(sendMessageToAI.rejected, (state, action) => {
         const { chatId } = action.meta.arg;
-        const chat = state.chats.find(chat => chat.id === chatId);
-        
+        const chat = state.chats.find((chat) => chat.id === chatId);
+
         // Don't add error message if request was aborted by user
         if (action.error.message !== "Request was stopped by user" && chat) {
-          let errorMessage = "I apologize, but I encountered an error while processing your request.";
-          
+          let errorMessage =
+            "I apologize, but I encountered an error while processing your request.";
+
           if (action.payload) {
-            if (action.payload.includes("Failed to fetch") || action.payload.includes("NetworkError")) {
-              errorMessage = "Unable to connect to the AI service. Please check your internet connection and try again.";
+            if (
+              action.payload.includes("Failed to fetch") ||
+              action.payload.includes("NetworkError")
+            ) {
+              errorMessage =
+                "Unable to connect to the AI service. Please check your internet connection and try again.";
             } else if (action.payload.includes("401")) {
-              errorMessage = "Invalid API key. Please check your OpenRouter API key.";
+              errorMessage =
+                "Invalid API key. Please check your OpenRouter API key.";
             } else if (action.payload.includes("429")) {
-              errorMessage = "Rate limit exceeded. Please wait a moment before sending another message.";
+              errorMessage =
+                "Rate limit exceeded. Please wait a moment before sending another message.";
             } else if (action.payload.includes("402")) {
               errorMessage = "Insufficient credits in your OpenRouter account.";
             } else if (action.payload.includes("400")) {
-              errorMessage = "Bad request. Please try rephrasing your question.";
+              errorMessage =
+                "Bad request. Please try rephrasing your question.";
             } else if (action.payload.includes("OpenRouter API Error")) {
               errorMessage = `API Error: ${action.payload}`;
             }
           }
-          
-          chat.messages.push({ sender: 'ai', text: errorMessage });
+
+          chat.messages.push({ sender: "ai", text: errorMessage });
         }
-        
+
         state.loadingStates[chatId] = false;
         delete state.abortControllers[chatId];
       });

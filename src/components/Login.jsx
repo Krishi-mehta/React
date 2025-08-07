@@ -12,12 +12,14 @@ import {
 import GoogleIcon from '@mui/icons-material/Google';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 function Login() {
   const { signInWithGoogle } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleGoogleSignIn = async () => {
     try {
@@ -27,7 +29,7 @@ function Login() {
       navigate('/chat/new');
     } catch (error) {
       console.error('Login error:', error);
-      setError('Failed to sign in with Google. Please try again.');
+      setError(t('auth.googleSignInError'));
     } finally {
       setLoading(false);
     }
@@ -87,7 +89,7 @@ function Login() {
                 mb: 1
               }}
             >
-              FileMentor
+              {t('sidebar.title')}
             </Typography>
             <Typography
               variant="body1"
@@ -96,7 +98,7 @@ function Login() {
                 lineHeight: 1.5
               }}
             >
-              Chat with your documents using AI
+              {t('auth.welcome')}
             </Typography>
           </Box>
 
@@ -138,7 +140,7 @@ function Login() {
               )
             }
           >
-            {loading ? 'Signing in...' : 'Continue with Google'}
+            {loading ? t('auth.signingIn') : t('auth.continueWithGoogle')}
           </Button>
 
           {/* Terms */}
@@ -151,7 +153,7 @@ function Login() {
               lineHeight: 1.4
             }}
           >
-            By continuing, you agree to our Terms of Service and Privacy Policy
+            {t('auth.termsAgreement')}
           </Typography>
         </Paper>
       </Box>

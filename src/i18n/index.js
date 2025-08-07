@@ -34,11 +34,14 @@ const resources = {
   Hindi: { translation: hi },
 };
 
+// Load saved language preference from localStorage
+const savedLanguage = localStorage.getItem('selectedLanguage') || 'English';
+
 i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: 'English', // default language
+    lng: savedLanguage, // use saved language or default to English
     fallbackLng: 'English',
     interpolation: {
       escapeValue: false, // React already escapes values

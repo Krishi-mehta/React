@@ -2,6 +2,7 @@ import React from "react";
 import { Box, Paper, Typography, Avatar, useTheme } from "@mui/material";
 import { keyframes } from "@emotion/react";
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
+import { useTranslation } from 'react-i18next';
 
 // Typing dots bounce animation
 const bounce = keyframes`
@@ -9,8 +10,9 @@ const bounce = keyframes`
   50% { transform: translateY(-4px); opacity: 1; }
 `;
 
-function LoadingMessage() {
+function LoadingMessage({ text }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   
   // Define colors with theme fallbacks
   const aiAvatarBg = theme.palette.primary.main || "#7247EE";
@@ -70,6 +72,18 @@ function LoadingMessage() {
             alignItems: "center",
           }}
         >
+          {text && (
+            <Typography
+              variant="body2"
+              sx={{
+                color: theme.palette.text.secondary,
+                fontSize: "0.875rem",
+                mr: 1,
+              }}
+            >
+              {text}
+            </Typography>
+          )}
           {[0, 1, 2].map((dot, index) => (
             <Box
               key={index}

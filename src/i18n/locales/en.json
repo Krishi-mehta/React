@@ -27,6 +27,7 @@
     "language": "Language"
   },
   "chat": {
+    "uploadDocumentOrImage": "Upload Document or Image",
     "newChat": "New Chat",
     "startNewChat": "Start chat with your files",
     "sendMessage": "Send a message...",
@@ -69,7 +70,20 @@
     "responseError": "Error generating response",
     "retryResponse": "Retry",
     "continueResponse": "Continue",
-    "responseComplete": "Response complete"
+    "responseComplete": "Response complete",
+    "howCanIHelp": "How can I help you today?",
+    "emptyStateDescription": "I can help you analyze and answer questions about your uploaded documents. Ask me anything!",
+    "uploadDocumentOrImage": "Upload Document or Image",
+    "processingFile": "Processing your file...",
+    "today": "Today",
+    "whatIs": "What is {{term}}?",
+    "howIsUsed": "How is {{term}} used?",
+    "explainInContext": "Explain {{term}} in the context of the document",
+    "whatInformationInvolves": "What information involves {{term}}?",
+    "whatIsMain": "What is the main",
+    "canYouExplain": "Can you explain",
+    "whatDoesDocumentSay": "What does this document say about",
+    "tellMeAbout": "Tell me about"
   },
   "sidebar": {
     "title": "FileMentor",
@@ -123,7 +137,11 @@
     "resetPassword": "Reset Password",
     "resetPasswordSent": "Password reset email sent",
     "verifyEmail": "Verify Email",
-    "emailVerified": "Email verified successfully"
+    "emailVerified": "Email verified successfully",
+    "googleSignInError": "Failed to sign in with Google. Please try again.",
+    "signingIn": "Signing in...",
+    "continueWithGoogle": "Continue with Google",
+    "termsAgreement": "By continuing, you agree to our Terms of Service and Privacy Policy"
   },
   "file": {
     "uploadFile": "Upload File",

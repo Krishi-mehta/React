@@ -14,14 +14,23 @@ import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import ImageIcon from "@mui/icons-material/Image";
 import ErrorIcon from "@mui/icons-material/Error";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 // import CloseIcon from "@mui/icons-material/Close";
 
 import FilePreview from "./FilePreview";
 import LanguageDropdown from "./LanguageDropdown";
 
-
-function ChatHeader({ title, file, onMenuClick, sidebarOpen, processingComplete = true, processingError = false, selectedLanguage, onLanguageChange }) {
+function ChatHeader({
+  title,
+  file,
+  fileData,
+  onMenuClick,
+  sidebarOpen,
+  processingComplete = true,
+  processingError = false,
+  selectedLanguage,
+  onLanguageChange,
+}) {
   const [filePreviewOpen, setFilePreviewOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -29,21 +38,37 @@ function ChatHeader({ title, file, onMenuClick, sidebarOpen, processingComplete 
 
   // Safe color access with fallbacks
   const chipBackground = theme.palette.custom?.chipBackground || "#6366F1";
-  const chipHoverBackground = theme.palette.custom?.chipHoverBackground || "#5A5FE0";
+  const chipHoverBackground =
+    theme.palette.custom?.chipHoverBackground || "#5A5FE0";
 
   const getFileIcon = (fileType) => {
-    if (fileType && fileType.startsWith('image/')) {
-      return <ImageIcon sx={{ color: "white !important", fontSize: '1.2rem' }} />;
+    if (fileType && fileType.startsWith("image/")) {
+      return (
+        <ImageIcon sx={{ color: "white !important", fontSize: "1.2rem" }} />
+      );
     }
-    return <PictureAsPdfIcon sx={{ color: "white !important", fontSize: '1.2rem' }} />;
+    return (
+      <PictureAsPdfIcon
+        sx={{ color: "white !important", fontSize: "1.2rem" }}
+      />
+    );
   };
 
   const getProcessingIcon = () => {
     if (processingError) {
-      return <ErrorIcon sx={{ color: "white !important", fontSize: '1rem', ml: 0.5 }} />;
+      return (
+        <ErrorIcon
+          sx={{ color: "white !important", fontSize: "1rem", ml: 0.5 }}
+        />
+      );
     }
     if (!processingComplete) {
-      return <CircularProgress size={16} sx={{ color: "white !important", ml: 0.5 }} />;
+      return (
+        <CircularProgress
+          size={16}
+          sx={{ color: "white !important", ml: 0.5 }}
+        />
+      );
     }
     return null;
   };
@@ -62,8 +87,8 @@ function ChatHeader({ title, file, onMenuClick, sidebarOpen, processingComplete 
         position: "sticky",
         top: 0,
         zIndex: 1000,
-        minHeight: '64px',
-        boxSizing: 'border-box',
+        minHeight: "64px",
+        boxSizing: "border-box",
       }}
     >
       {/* Left Section - Menu Button & Title */}
@@ -78,16 +103,16 @@ function ChatHeader({ title, file, onMenuClick, sidebarOpen, processingComplete 
       >
         {/* Menu Icon */}
         {(isMobile || !sidebarOpen) && (
-          <Tooltip title={t('sidebar.toggleSidebar')} enterDelay={500}>
+          <Tooltip title={t("sidebar.toggleSidebar")} enterDelay={500}>
             <IconButton
               onClick={onMenuClick}
               sx={{
                 color: theme.palette.text.disabled,
-                p: '8px',
-                '&:hover': {
+                p: "8px",
+                "&:hover": {
                   bgcolor: theme.palette.action.hover,
                 },
-                borderRadius: '50%',
+                borderRadius: "50%",
               }}
             >
               <MenuIcon fontSize="small" />
@@ -100,7 +125,7 @@ function ChatHeader({ title, file, onMenuClick, sidebarOpen, processingComplete 
           sx={{
             fontWeight: 500,
             color: theme.palette.text.primary,
-            fontSize: { xs: '1rem', sm: '1.125rem' },
+            fontSize: { xs: "1rem", sm: "1.125rem" },
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -120,21 +145,21 @@ function ChatHeader({ title, file, onMenuClick, sidebarOpen, processingComplete 
         }}
       >
         {/* Language Dropdown */}
-        <LanguageDropdown 
-          selectedLanguage={selectedLanguage} 
+        <LanguageDropdown
+          selectedLanguage={selectedLanguage}
           onLanguageChange={onLanguageChange}
         />
-        
+
         {file && (
           <>
-                              <Tooltip title={t('file.preview')}>
-              <IconButton 
+            <Tooltip title={t("file.preview")}>
+              <IconButton
                 onClick={() => setFilePreviewOpen(true)}
                 disabled={!processingComplete || processingError}
                 sx={{
                   color: theme.palette.primary.main,
                   bgcolor: theme.palette.action.hover,
-                  '&:hover': {
+                  "&:hover": {
                     bgcolor: theme.palette.action.selected,
                   },
                 }}
@@ -144,21 +169,33 @@ function ChatHeader({ title, file, onMenuClick, sidebarOpen, processingComplete 
             </Tooltip>
             <Chip
               icon={
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
                   {getFileIcon(file.type)}
                   {getProcessingIcon()}
                 </Box>
               }
               label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                   <span>{file.name}</span>
                   {!processingComplete && !processingError && (
-                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem' }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "rgba(255,255,255,0.7)",
+                        fontSize: "0.7rem",
+                      }}
+                    >
                       Processing...
                     </Typography>
                   )}
                   {processingError && (
-                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem' }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "rgba(255,255,255,0.7)",
+                        fontSize: "0.7rem",
+                      }}
+                    >
                       Error
                     </Typography>
                   )}
@@ -181,26 +218,26 @@ function ChatHeader({ title, file, onMenuClick, sidebarOpen, processingComplete 
                 color: "white",
                 fontWeight: 500,
                 fontSize: { xs: "0.75rem", sm: "0.8125rem" },
-                height: '38px',
+                height: "38px",
                 maxWidth: { xs: "120px", sm: "180px", md: "250px" },
-                borderRadius: '8px',
-                px: '10px',
-                '& .MuiChip-label': {
+                borderRadius: "8px",
+                px: "10px",
+                "& .MuiChip-label": {
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
-                  paddingLeft: '4px',
-                  paddingRight: '4px',
+                  paddingLeft: "4px",
+                  paddingRight: "4px",
                 },
-                '& .MuiChip-icon': {
-                  marginLeft: '6px',
-                  marginRight: '2px',
+                "& .MuiChip-icon": {
+                  marginLeft: "6px",
+                  marginRight: "2px",
                 },
                 "& .MuiChip-deleteIcon": {
                   color: "white",
-                  fontSize: '0.9rem',
-                  marginRight: '6px',
-                  marginLeft: '2px',
+                  fontSize: "0.9rem",
+                  marginRight: "6px",
+                  marginLeft: "2px",
                   "&:hover": {
                     color: theme.palette.background.default,
                     bgcolor: "rgba(255,255,255,0.1)",
@@ -209,7 +246,7 @@ function ChatHeader({ title, file, onMenuClick, sidebarOpen, processingComplete 
                 "&:hover": {
                   bgcolor: chipHoverBackground,
                 },
-                transition: theme.transitions.create(['background-color'], {
+                transition: theme.transitions.create(["background-color"], {
                   duration: theme.transitions.duration.short,
                 }),
               }}
@@ -217,13 +254,13 @@ function ChatHeader({ title, file, onMenuClick, sidebarOpen, processingComplete 
           </>
         )}
       </Box>
-      
+
       {/* File Preview Component */}
       {file && (
-        <FilePreview 
-          open={filePreviewOpen} 
-          onClose={() => setFilePreviewOpen(false)} 
-          file={file}
+        <FilePreview
+          open={filePreviewOpen}
+          onClose={() => setFilePreviewOpen(false)}
+          file={{ ...file, data: fileData }}
         />
       )}
     </Box>
