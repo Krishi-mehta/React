@@ -236,18 +236,18 @@ function ChatHeader({
                   )}
                 </Box>
               }
-              onDelete={handleRemoveFile}
-              deleteIcon={
-                <CloseIcon
-                  sx={{
-                    color: "white !important",
-                    fontSize: '0.9rem',
-                    "&:hover": {
-                      color: `${theme.palette.background.default} !important`,
-                    },
-                  }}
-                />
-              }
+              // onDelete={handleRemoveFile}
+              // deleteIcon={
+              //   <CloseIcon
+              //     sx={{
+              //       color: "white !important",
+              //       fontSize: '0.9rem',
+              //       "&:hover": {
+              //         color: `${theme.palette.background.default} !important`,
+              //       },
+              //     }}
+              //   />
+              // }
               sx={{
                 bgcolor: chipBackground,
                 color: "white",

@@ -25,7 +25,7 @@ import {
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 
-const FilePreview = ({ open, onClose, file }) => {
+const FilePreview = ({ open, onClose, file, sidebarOpen, setSidebarOpen }) => {
   const theme = useTheme();
   const { t } = useTranslation();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -49,6 +49,30 @@ const FilePreview = ({ open, onClose, file }) => {
     }
   }, [open, file, isMobile]);
 
+  useEffect(() => {
+    const handleFullScreenChange = () => {
+      const fullScreenActive = Boolean(document.fullscreenElement);
+      setIsFullScreen(fullScreenActive);
+
+      if (fullScreenActive) {
+        // If entering fullscreen and sidebar is open → close it
+        if (sidebarOpen) {
+          setSidebarOpen(false);
+        }
+      } else {
+        // If exiting fullscreen and screen is small → reopen sidebar
+        if (window.innerWidth <= 768) {
+          setSidebarOpen(true);
+        }
+      }
+    };
+
+    document.addEventListener("fullscreenchange", handleFullScreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullScreenChange);
+    };
+  }, [sidebarOpen, setSidebarOpen]);
+  
   const handleZoomIn = () => {
     setScale((prevScale) => Math.min(prevScale + 0.2, 3.0));
   };
@@ -101,7 +125,11 @@ const FilePreview = ({ open, onClose, file }) => {
   };
 
   const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
   };
 
   const handleClose = () => {
@@ -221,12 +249,16 @@ const FilePreview = ({ open, onClose, file }) => {
                 </IconButton>
               </Tooltip>
             )} */}
-            <Tooltip title={isFullscreen ? t('file.exitFullscreen') : t('file.fullscreen')}>
+            <Tooltip title={isFullscreen ? t('file.exitFullscreen') : t('file.fullscreen')}
+            sx={{color: theme.palette.mode === "dark" ? "#fff" : "#000" }}
+            >
               <IconButton onClick={toggleFullscreen} size="small">
                 {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
               </IconButton>
             </Tooltip>
-            <Tooltip title={t('file.closePreview')}>
+            <Tooltip title={t('file.closePreview')}
+            sx={{color: theme.palette.mode === "dark" ? "#fff" : "#000" }}
+            >
               <IconButton onClick={handleClose} size="small">
                 <Close />
               </IconButton>
