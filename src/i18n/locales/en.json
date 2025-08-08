@@ -259,5 +259,30 @@
     "accountCreated": "Account created successfully",
     "loggedIn": "Logged in successfully",
     "loggedOut": "Logged out successfully"
-  }
+  },
+    "file": {
+      "preview": "Preview File",
+      "processingInProgress": "File is still processing...",
+      "processingError": "Error processing file",
+      "downloadFile": "Download File",
+      "zoomIn": "Zoom In",
+      "zoomOut": "Zoom Out",
+      "rotateLeft": "Rotate Left", 
+      "rotateRight": "Rotate Right",
+      "copySelectedText": "Copy Selected Text",
+      "previousPage": "Previous Page",
+      "nextPage": "Next Page",
+      "fullscreen": "Fullscreen",
+      "exitFullscreen": "Exit Fullscreen",
+      "closePreview": "Close Preview",
+      "previewNotAvailable": "Preview Not Available",
+      "unsupportedFileType": "This file type cannot be previewed",
+      "loadingPreview": "Loading preview...",
+      "previewError": "Preview Error",
+      "failedToLoadDocument": "Failed to load document. The file may be corrupted or unsupported.",
+      "failedToLoadImage": "Failed to load image. The file may be corrupted or unsupported.",
+      "failedToLoadPage": "Failed to load page",
+      "selectedText": "Selected Text:",
+      "noFileSelected": "No file selected for preview."
+    }
 } 

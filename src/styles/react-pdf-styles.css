@@ -1,0 +1,115 @@
+/* React PDF Styles */
+.react-pdf__Page {
+    position: relative;
+    display: inline-block;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 8px;
+    background: white;
+  }
+  
+  .react-pdf__Page__canvas {
+    display: block;
+    user-select: none;
+  }
+  
+  .react-pdf__Page__textContent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: transparent;
+    transform-origin: top left;
+    overflow: hidden;
+    opacity: 0.2;
+    line-height: 1;
+  }
+  
+  .react-pdf__Page__textContent span {
+    position: absolute;
+    white-space: pre;
+    cursor: text;
+    transform-origin: 0% 0%;
+  }
+  
+  .react-pdf__Page__annotations {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    transform-origin: top left;
+  }
+  
+  .react-pdf__Page__annotation {
+    position: absolute;
+    pointer-events: auto;
+  }
+  
+  /* Custom styles for better integration */
+  .file-preview-container {
+    background: #f8f9fa;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .file-preview-container .react-pdf__Document {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .file-preview-page {
+    margin: 16px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    .react-pdf__Page {
+      background: #2d2d2d;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+    
+    .file-preview-container {
+      background: #1e1e1e;
+    }
+  }
+  
+  /* Mobile optimizations */
+  @media (max-width: 768px) {
+    .react-pdf__Page {
+      margin: 4px;
+    }
+    
+    .file-preview-page {
+      margin: 8px 0;
+    }
+  }
+  
+  /* Text selection styling */
+  .react-pdf__Page__textContent span::selection {
+    background: rgba(0, 123, 255, 0.3);
+  }
+  
+  .react-pdf__Page__textContent span::-moz-selection {
+    background: rgba(0, 123, 255, 0.3);
+  }
+  
+  /* Loading and error states */
+  .pdf-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: #6c757d;
+  }
+  
+  .pdf-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: #dc3545;
+    text-align: center;
+  }

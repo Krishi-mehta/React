@@ -14,10 +14,10 @@ import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import ImageIcon from "@mui/icons-material/Image";
 import ErrorIcon from "@mui/icons-material/Error";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import CloseIcon from "@mui/icons-material/Close";
 import { useTranslation } from "react-i18next";
-// import CloseIcon from "@mui/icons-material/Close";
 
-// import FilePreview from "./FilePreview";
+import FilePreview from "./FilePreview";
 import LanguageDropdown from "./LanguageDropdown";
 
 function ChatHeader({
@@ -25,13 +25,14 @@ function ChatHeader({
   file,
   fileData,
   onMenuClick,
+  onRemoveFile,
   sidebarOpen,
   processingComplete = true,
   processingError = false,
   selectedLanguage,
   onLanguageChange,
 }) {
-  // const [filePreviewOpen, setFilePreviewOpen] = useState(false);
+  const [filePreviewOpen, setFilePreviewOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { t } = useTranslation();
@@ -71,6 +72,18 @@ function ChatHeader({
       );
     }
     return null;
+  };
+
+  const handlePreviewClick = () => {
+    if (processingComplete && !processingError) {
+      setFilePreviewOpen(true);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    if (onRemoveFile) {
+      onRemoveFile();
+    }
   };
 
   return (
@@ -135,7 +148,7 @@ function ChatHeader({
         </Typography>
       </Box>
 
-      {/* Right Section - Language Dropdown, File Chip and Preview Button */}
+      {/* Right Section - Language Dropdown, File Chip, Preview Button and Remove Button */}
       <Box
         sx={{
           display: "flex",
@@ -152,21 +165,43 @@ function ChatHeader({
 
         {file && (
           <>
-            {/* <Tooltip title={t("file.preview")}>
-              <IconButton
-                onClick={() => setFilePreviewOpen(true)}
-                disabled={!processingComplete || processingError}
-                sx={{
-                  color: theme.palette.primary.main,
-                  bgcolor: theme.palette.action.hover,
-                  "&:hover": {
-                    bgcolor: theme.palette.action.selected,
-                  },
-                }}
-              >
-                <VisibilityIcon fontSize="small" />
-              </IconButton>
-            </Tooltip> */}
+            {/* Preview Button */}
+            <Tooltip 
+              title={
+                !processingComplete 
+                  ? t("file.processingInProgress")
+                  : processingError 
+                  ? t("file.processingError")
+                  : t("file.preview")
+              }
+            >
+              <span>
+                <IconButton
+                  onClick={handlePreviewClick}
+                  disabled={!processingComplete || processingError}
+                  sx={{
+                    color: processingComplete && !processingError 
+                      ? theme.palette.primary.main 
+                      : theme.palette.action.disabled,
+                    bgcolor: theme.palette.action.hover,
+                    "&:hover": {
+                      bgcolor: processingComplete && !processingError 
+                        ? theme.palette.action.selected 
+                        : theme.palette.action.hover,
+                    },
+                    "&:disabled": {
+                      color: theme.palette.action.disabled,
+                      bgcolor: theme.palette.action.hover,
+                    },
+                  }}
+                  size="small"
+                >
+                  <VisibilityIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+
+            {/* File Chip */}
             <Chip
               icon={
                 <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -201,18 +236,18 @@ function ChatHeader({
                   )}
                 </Box>
               }
-              // onDelete={onRemoveFile}
-              // deleteIcon={
-              //   <CloseIcon
-              //     sx={{
-              //       color: "white !important",
-              //       fontSize: '0.9rem',
-              //       "&:hover": {
-              //         color: `${theme.palette.background.default} !important`,
-              //       },
-              //     }}
-              //   />
-              // }
+              onDelete={handleRemoveFile}
+              deleteIcon={
+                <CloseIcon
+                  sx={{
+                    color: "white !important",
+                    fontSize: '0.9rem',
+                    "&:hover": {
+                      color: `${theme.palette.background.default} !important`,
+                    },
+                  }}
+                />
+              }
               sx={{
                 bgcolor: chipBackground,
                 color: "white",
@@ -256,13 +291,13 @@ function ChatHeader({
       </Box>
 
       {/* File Preview Component */}
-      {/* {file && (
+      {file && (
         <FilePreview
           open={filePreviewOpen}
           onClose={() => setFilePreviewOpen(false)}
           file={{ ...file, data: fileData }}
         />
-      )} */}
+      )}
     </Box>
   );
 }

@@ -42,24 +42,23 @@ function ChatView({
     }
   }, [currentChat, chatId, navigate]);
 
-  // THIS IS THE MOST IMPORTANT CHANGE.
-  // We return early and render nothing but a loading state if the chat data is not ready.
+  // Return early and render nothing but a loading state if the chat data is not ready.
   // This prevents any attempt to access properties of `currentChat`.
   if (!currentChat || (chatId !== "new" && !currentChat)) {
-      return (
-          <Box
-              sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: "100%",
-              }}
-          >
-              <Typography variant="h6" color="textSecondary">
-                  Loading chat or chat not found...
-              </Typography>
-          </Box>
-      );
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100%",
+        }}
+      >
+        <Typography variant="h6" color="textSecondary">
+          Loading chat or chat not found...
+        </Typography>
+      </Box>
+    );
   }
 
   // Once we are sure `currentChat` is defined, we can safely render the rest of the component.
@@ -68,11 +67,11 @@ function ChatView({
       <ChatHeader
         title={currentChat.title}
         file={currentChat.file}
-        fileData={currentChat.file?.data} // FIX: Pass the file data
+        fileData={currentChat.file?.data} // Pass the file data for preview
         onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+        onRemoveFile={onRemoveFile}
         sidebarOpen={sidebarOpen}
         isMobile={isMobile}
-        onRemoveFile={onRemoveFile}
         processingComplete={currentChat.processingComplete !== false}
         processingError={currentChat.processingError || false}
         selectedLanguage={selectedLanguage}

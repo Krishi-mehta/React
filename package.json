@@ -29,7 +29,7 @@
     "react-dom": "^19.1.0",
     "react-i18next": "^15.6.1",
     "react-markdown": "^10.1.0",
-    "react-pdf": "^10.0.1",
+    "react-pdf": "^7.7.3",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.7.1",
     "remark-gfm": "^4.0.1",

@@ -214,8 +214,14 @@ const chatSlice = createSlice({
 
     // File management
     updateChatFile: (state, action) => {
-      const { chatId, file, fullText, processingComplete, processingError, data } =
-        action.payload;
+      const {
+        chatId,
+        file,
+        fullText,
+        processingComplete,
+        processingError,
+        data,
+      } = action.payload;
       const chat = state.chats.find((chat) => chat.id === chatId);
       if (chat) {
         // Store the file metadata and data in Redux state
@@ -238,7 +244,6 @@ const chatSlice = createSlice({
         if (file !== undefined) chat.messages = [];
       }
     },
-    
 
     removeChatFile: (state, action) => {
       const chatId = action.payload;
