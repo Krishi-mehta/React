@@ -214,19 +214,19 @@ const chatSlice = createSlice({
 
     // File management
     updateChatFile: (state, action) => {
-      const { chatId, file, fullText, processingComplete, processingError } =
+      const { chatId, file, fullText, processingComplete, processingError, data } =
         action.payload;
       const chat = state.chats.find((chat) => chat.id === chatId);
       if (chat) {
-        // Store only the serializable file metadata in Redux state
+        // Store the file metadata and data in Redux state
         if (file !== undefined) {
           chat.file = {
             name: file.name,
             type: file.type,
             size: file.size,
-            data: file.data, // Make sure to keep the data
+            data: data || file.data, // Use data from action payload or file.data
             isImage: file.type.startsWith("image/"),
-            // You can add other metadata here, but NOT the file data itself
+            // You can add other metadata here
           };
         }
         if (fullText !== undefined) chat.fullText = fullText;
@@ -234,9 +234,11 @@ const chatSlice = createSlice({
           chat.processingComplete = processingComplete;
         if (processingError !== undefined)
           chat.processingError = processingError;
+        // Reset messages only if a new file is being added
         if (file !== undefined) chat.messages = [];
       }
     },
+    
 
     removeChatFile: (state, action) => {
       const chatId = action.payload;

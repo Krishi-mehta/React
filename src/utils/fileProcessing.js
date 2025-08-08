@@ -17,24 +17,28 @@ export const extractTextFromFile = async (file, isBackground = false) => {
       } else {
         return "Processing document... Please wait while I extract the text content.";
       }
-    } // Handle Images - both OCR and visual analysis
+    } 
 
+    // Handle Images - both OCR and visual analysis
     if (fileType.startsWith("image/")) {
       return await extractContentFromImage(file);
-    } // Handle PDFs
+    } 
 
+    // Handle PDFs
     if (fileType === "application/pdf" || fileName.endsWith(".pdf")) {
       return await extractTextFromPDF(file);
-    } // Handle Word documents
+    } 
 
+    // Handle Word documents
     if (
       fileType ===
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
       fileName.endsWith(".docx")
     ) {
       return await extractTextFromDocx(file);
-    } // Handle plain text files
+    } 
 
+    // Handle plain text files
     if (fileType === "text/plain" || fileName.endsWith(".txt")) {
       return await extractTextFromTxt(file);
     }
@@ -49,10 +53,12 @@ export const extractTextFromFile = async (file, isBackground = false) => {
 // NEW: Extract both text and visual content from images
 const extractContentFromImage = async (file) => {
   try {
-    console.log("Processing image:", file.name); // Convert image to base64 for vision API
-
-    const base64Image = await convertImageToBase64(file); // Try OCR first for any text content
-
+    console.log("Processing image:", file.name); 
+    
+    // Convert image to base64 for vision API
+    const base64Image = await convertImageToBase64(file); 
+    
+    // Try OCR first for any text content
     let ocrText = "";
     try {
       const {
@@ -63,10 +69,12 @@ const extractContentFromImage = async (file) => {
       ocrText = text?.trim() || "";
     } catch (ocrError) {
       console.log("OCR failed, will rely on vision analysis");
-    } // Get visual description from AI
-
-    const visualDescription = await analyzeImageWithAI(base64Image, file.type); // Combine OCR text and visual description
-
+    } 
+    
+    // Get visual description from AI
+    const visualDescription = await analyzeImageWithAI(base64Image, file.type); 
+    
+    // Combine OCR text and visual description
     let combinedContent = "";
 
     if (ocrText && ocrText.length > 10) {
@@ -156,7 +164,8 @@ const analyzeImageWithAI = async (base64Image, mimeType) => {
 
     return data.choices[0].message.content;
   } catch (error) {
-    console.error("Vision API error:", error); // Fallback description
+    console.error("Vision API error:", error); 
+    // Fallback description
     return "This is an image file. I can see it contains visual content, but I'm unable to provide a detailed description at the moment. Please describe what you see in the image, and I'll help you analyze it.";
   }
 };
@@ -232,6 +241,10 @@ const extractTextFromTxt = async (file) => {
 };
 
 // Background processing function that doesn't block UI
+// In your fileProcessing.js, replace the processFileInBackground function:
+
+// Replace your processFileInBackground function in fileProcessing.js with this:
+
 export const processFileInBackground = async (
   file,
   chatId,
@@ -240,28 +253,28 @@ export const processFileInBackground = async (
   addMessage
 ) => {
   try {
-    console.log("Starting background processing for:", file.name); // Process the file content
-
-    const fullText = await extractTextFromFile(file, false); // KEY FIX: Create a serializable representation of the file object
-    const fileData = await fileToBase64(file);
-
-    const serializableFile = {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-    }; // Update the chat with the processed content and the serializable file object
-
+    console.log("Starting background processing for:", file.name); 
+    
+    // Process the file content
+    const fullText = await extractTextFromFile(file, false); 
+    
+    console.log("Background processing complete, updating chat with fullText only");
+    
+    // CRITICAL FIX: Only update fullText and processing status
+    // DO NOT pass a file object - this preserves the original file data
     dispatch(
       updateChatFile({
         chatId,
-        file: serializableFile, // <-- Updated to use the serializable object
+        // file: undefined, // Don't pass file object to preserve existing data
         fullText,
         processingComplete: true,
-        data: fileData,
+        processingError: false, // Ensure error is cleared
       })
-    ); // Add completion message
+    ); 
 
-    const completionMessage = file.type.startsWith("image/")
+    // Add completion message
+    const isImage = file.type.startsWith('image/');
+    const completionMessage = isImage
       ? "✅ Image analysis complete! I can now see and understand the content of your image. Feel free to ask me questions about what's in the image, any text I found, colors, objects, or anything else you'd like to know!"
       : "✅ Document processing complete! I've successfully extracted and analyzed the text content. You can now ask me questions about the document.";
 
@@ -274,31 +287,28 @@ export const processFileInBackground = async (
 
     console.log("Background processing completed for:", file.name);
   } catch (error) {
-    console.error("Background processing failed:", error); // KEY FIX: Create a serializable representation of the file object for the error state
+    console.error("Background processing failed:", error); 
 
-    const serializableFile = {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-    }; // Update chat with error state and the serializable file object
-
+    // Update chat with error state but preserve file data
     dispatch(
       updateChatFile({
         chatId,
-        file: serializableFile, // <-- Updated to use the serializable object
+        // file: undefined, // Don't pass file object to preserve existing data
         fullText: `Error processing file: ${error.message}. Please try uploading again.`,
         processingComplete: true,
         processingError: true,
       })
-    ); // Add error message
+    ); 
 
+    // Add error message
+    const isImage = file.type.startsWith('image/');
     dispatch(
       addMessage({
         chatId,
         message: {
           sender: "ai",
           text: `❌ Sorry, I encountered an error while processing your ${
-            file.type.startsWith("image/") ? "image" : "document"
+            isImage ? "image" : "document"
           }: ${error.message}. Please try uploading the file again.`,
         },
       })
@@ -314,6 +324,7 @@ export const validateFile = (file) => {
     "text/plain",
     "image/",
   ];
+  
   if (file.size > maxSize) {
     return {
       valid: false,
@@ -321,7 +332,9 @@ export const validateFile = (file) => {
         2
       )}MB) exceeds the 15MB limit.`,
     };
-  } // Check if file.type starts with any of the supported types (e.g., 'image/png' starts with 'image/')
+  } 
+  
+  // Check if file.type starts with any of the supported types
   if (
     !supportedTypes.some((type) => file.type.startsWith(type.split("/")[0]))
   ) {
@@ -330,6 +343,7 @@ export const validateFile = (file) => {
       error: `Unsupported file type: ${file.type}. Supported formats: PDF, DOCX, TXT, and images.`,
     };
   }
+  
   return { valid: true };
 };
 

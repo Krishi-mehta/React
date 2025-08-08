@@ -68,6 +68,7 @@ function ChatView({
       <ChatHeader
         title={currentChat.title}
         file={currentChat.file}
+        fileData={currentChat.file?.data} // FIX: Pass the file data
         onMenuClick={() => setSidebarOpen(!sidebarOpen)}
         sidebarOpen={sidebarOpen}
         isMobile={isMobile}

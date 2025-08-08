@@ -17,7 +17,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useTranslation } from "react-i18next";
 // import CloseIcon from "@mui/icons-material/Close";
 
-import FilePreview from "./FilePreview";
+// import FilePreview from "./FilePreview";
 import LanguageDropdown from "./LanguageDropdown";
 
 function ChatHeader({
@@ -31,7 +31,7 @@ function ChatHeader({
   selectedLanguage,
   onLanguageChange,
 }) {
-  const [filePreviewOpen, setFilePreviewOpen] = useState(false);
+  // const [filePreviewOpen, setFilePreviewOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { t } = useTranslation();
@@ -152,7 +152,7 @@ function ChatHeader({
 
         {file && (
           <>
-            <Tooltip title={t("file.preview")}>
+            {/* <Tooltip title={t("file.preview")}>
               <IconButton
                 onClick={() => setFilePreviewOpen(true)}
                 disabled={!processingComplete || processingError}
@@ -166,7 +166,7 @@ function ChatHeader({
               >
                 <VisibilityIcon fontSize="small" />
               </IconButton>
-            </Tooltip>
+            </Tooltip> */}
             <Chip
               icon={
                 <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -256,13 +256,13 @@ function ChatHeader({
       </Box>
 
       {/* File Preview Component */}
-      {file && (
+      {/* {file && (
         <FilePreview
           open={filePreviewOpen}
           onClose={() => setFilePreviewOpen(false)}
           file={{ ...file, data: fileData }}
         />
-      )}
+      )} */}
     </Box>
   );
 }

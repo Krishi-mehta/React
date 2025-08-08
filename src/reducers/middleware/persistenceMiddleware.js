@@ -13,6 +13,7 @@ const serializeFile = async (file) => {
         type: file.type,
         size: file.size,
         lastModified: file.lastModified,
+        isImage: file.type.startsWith('image/'),
         data: reader.result // base64 data URL
       });
     };
@@ -21,17 +22,40 @@ const serializeFile = async (file) => {
   });
 };
 
-// Helper function to deserialize file data
+// Helper function to deserialize file data and recreate preview URLs
 const deserializeFile = (serializedFile) => {
   if (!serializedFile) return null;
   
-  // Return an object that mimics File properties but with the base64 data
+  let previewURL = null;
+  
+  // If it's an image and we have base64 data, create a blob URL for preview
+  if (serializedFile.isImage && serializedFile.data) {
+    try {
+      // Convert base64 to blob for better performance
+      const byteCharacters = atob(serializedFile.data.split(',')[1]);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: serializedFile.type });
+      previewURL = URL.createObjectURL(blob);
+    } catch (error) {
+      console.error('Failed to create preview URL:', error);
+      // Fallback to base64 data URL
+      previewURL = serializedFile.data;
+    }
+  }
+  
+  // Return an object that mimics File properties but with the base64 data and preview URL
   return {
     name: serializedFile.name,
     type: serializedFile.type,
     size: serializedFile.size,
     lastModified: serializedFile.lastModified,
-    data: serializedFile.data // base64 data URL for preview
+    isImage: serializedFile.isImage,
+    data: serializedFile.data, // base64 data URL for persistence
+    previewURL: previewURL // blob URL for preview
   };
 };
 
@@ -42,10 +66,25 @@ const serializeChatsForStorage = async (chats) => {
   for (const chat of chats) {
     const serializedChat = { ...chat };
     
-    // Serialize file if it exists and is a File object
-    if (chat.file && chat.file instanceof File) {
+    // Serialize file if it exists
+    if (chat.file) {
       try {
-        serializedChat.file = await serializeFile(chat.file);
+        // If it's a File object, serialize it
+        if (chat.file instanceof File) {
+          serializedChat.file = await serializeFile(chat.file);
+        } 
+        // If it's already serialized but has a previewURL, clean it up for storage
+        else if (chat.file && typeof chat.file === 'object') {
+          serializedChat.file = {
+            name: chat.file.name,
+            type: chat.file.type,
+            size: chat.file.size,
+            lastModified: chat.file.lastModified,
+            isImage: chat.file.isImage,
+            data: chat.file.data
+            // Don't store previewURL - it will be recreated on load
+          };
+        }
       } catch (error) {
         console.error('Failed to serialize file for chat:', chat.id, error);
         serializedChat.file = null;
@@ -82,6 +121,15 @@ const getUserLanguageKey = (userId) => {
   return userId ? `pdfChatApp_language_${userId}` : 'pdfChatApp_language_guest';
 };
 
+// Clean up blob URLs from chats (call when needed to prevent memory leaks)
+export const cleanupChatBlobUrls = (chats) => {
+  chats.forEach(chat => {
+    if (chat.file?.previewURL && chat.file.previewURL.startsWith('blob:')) {
+      URL.revokeObjectURL(chat.file.previewURL);
+    }
+  });
+};
+
 // Load chats from localStorage for specific user
 export const initializeChatsFromStorage = createAsyncThunk(
   'chat/initializeChatsFromStorage',
@@ -97,7 +145,7 @@ export const initializeChatsFromStorage = createAsyncThunk(
           ? parsedChats.filter(chat => chat.userId === userId || !chat.userId) // Include legacy chats without userId
           : parsedChats;
         
-        // Deserialize file data
+        // Deserialize file data and recreate preview URLs
         const deserializedChats = deserializeChatsFromStorage(userChats);
         
         return deserializedChats;
@@ -203,6 +251,15 @@ export const persistenceMiddleware = (store) => (next) => (action) => {
 export const clearUserStorage = (userId) => {
   try {
     const storageKey = getUserStorageKey(userId);
+    const storedChats = localStorage.getItem(storageKey);
+    
+    if (storedChats) {
+      // Clean up any blob URLs before clearing storage
+      const chats = JSON.parse(storedChats);
+      const deserializedChats = deserializeChatsFromStorage(chats);
+      cleanupChatBlobUrls(deserializedChats);
+    }
+    
     localStorage.removeItem(storageKey);
   } catch (error) {
     console.error("Failed to clear user storage:", error);
